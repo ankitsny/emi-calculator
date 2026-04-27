@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Home Loan Compass</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg:#0a0b0f; --surface:#12141a; --surface2:#1a1d26; --border:#252836;
@@ -52,10 +51,12 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(167,139,250,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:40px 24px 80px;}
 .top-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
-.theme-btn,.export-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s;}
+.theme-btn,.print-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s;}
 .theme-btn{min-width:42px;font-size:16px;line-height:1;}
-.theme-btn:hover,.export-btn:hover{background:var(--surface2);border-color:var(--accent);}
-.export-btn{font-weight:600;letter-spacing:.04em;}
+.theme-btn:hover,.print-btn:hover{background:var(--surface2);border-color:var(--accent);}
+.print-btn{font-weight:600;letter-spacing:.04em;}
+.print-btn:disabled{opacity:.45;cursor:not-allowed;}
+.print-btn:disabled:hover{background:var(--surface);border-color:var(--border);}
 
 /* Header */
 .tag{display:inline-block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 10px;border-radius:2px;margin-bottom:16px;}
@@ -225,28 +226,40 @@ html[data-theme="light"] .tab.active{color:#1e1b4b;}
 .results.show{display:block;}
 html[data-theme="light"] .calc-btn{color:#1e1b4b;}
 @media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
   body::before{display:none!important;}
+  html,body{
+    width:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
   .top-actions,.calc-row,.add-btn,.ph .arr{display:none!important;}
-  .del-btn,.edit-op-btn,.apply-op-btn,.cancel-op-btn,.reset-btn,.export-btn,.theme-btn{display:none!important;}
-  .wrap{max-width:none;padding:12px;}
+  .del-btn,.edit-op-btn,.apply-op-btn,.cancel-op-btn,.reset-btn,.print-btn,.theme-btn{display:none!important;}
+  .wrap{max-width:none!important;width:auto!important;padding:0!important;margin:0!important;}
   .results{display:block!important;}
+  .cw{margin-bottom:16px!important;break-inside:avoid;}
+  .cc{height:280px!important;}
+  .mtw,.ytw{overflow:visible!important;break-inside:avoid;}
+  .tscroll{max-height:none!important;overflow:visible!important;}
+  #pgn{display:none!important;}
+  .mt{width:max-content!important;min-width:100%!important;table-layout:auto!important;font-size:10px!important;}
+  .mt th{position:static!important;}
+  .mt td,.mt th{padding:6px 8px!important;}
+  .yt{font-size:10px!important;}
   .mt tr:hover td,.mt tr.rpp td,.mt tr.rod td,.mt tr.rod-def td{background:transparent!important;}
 }
-/* PDF capture: avoid clipping wide month table (html2canvas respects overflow) */
-body.pdf-export{overflow-x:visible!important;}
-body.pdf-export .wrap{max-width:none!important;}
-body.pdf-export .mtw{overflow:visible!important;}
-body.pdf-export .tscroll{max-height:none!important;overflow:visible!important;}
-body.pdf-export .mt{width:max-content;min-width:100%;table-layout:auto;}
-body.pdf-export .mt th{position:static;}
-body.pdf-export #pgn{display:none!important;}
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="top-actions">
-  <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light / dark theme" aria-label="Toggle theme">🌙</button>
-  <button type="button" class="export-btn" onclick="exportPdf()" title="Download layout as PDF">Export PDF</button>
+  <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light / dark theme" aria-label="Toggle theme">☀️</button>
+  <button type="button" class="print-btn" id="printBtn" disabled onclick="printReport()" title="Print report (after you calculate)">Print</button>
 </div>
 
 <div class="tag">Home Loan Compass v2</div>
@@ -482,9 +495,9 @@ function applyTheme(mode) {
   refreshChartForTheme();
 }
 function initTheme() {
-  let t = 'dark';
+  let t = 'light';
   try {
-    t = localStorage.getItem('hl-theme') === 'light' ? 'light' : 'dark';
+    if (localStorage.getItem('hl-theme') === 'dark') t = 'dark';
   } catch (e) { /* */ }
   applyTheme(t);
 }
@@ -495,89 +508,36 @@ function toggleTheme() {
     savePersistedState();
   } catch (e) { /* */ }
 }
-function exportPdf() {
-  const el = document.querySelector('.wrap');
-  const btn = document.querySelector('.export-btn');
-  if (!el) return;
-  if (typeof html2pdf === 'undefined') {
-    window.print();
-    return;
-  }
-  if (btn) btn.disabled = true;
-  document.body.classList.add('pdf-export');
-  renderTable({ fullList: true });
-  const ts = document.querySelector('.tscroll');
-  if (ts) {
-    ts.scrollLeft = 0;
-    ts.scrollTop = 0;
-  }
+function setPrintEnabled(on) {
+  const b = document.getElementById('printBtn');
+  if (b) b.disabled = !on;
+}
+/** Print uses @media print (landscape, full-width tables). Temporarily show all month rows so long tables print completely. */
+function printReport() {
+  const res = document.getElementById('results');
+  if (!res || !res.classList.contains('show')) return;
+  const hadViewAll = monthTableViewAll;
+  const prevPage = page;
+  monthTableViewAll = true;
+  page = 1;
+  renderTable();
   window.scrollTo(0, 0);
-  const bg = getComputedStyle(document.body).backgroundColor;
-  const onClone = clonedDoc => {
-    const b = clonedDoc.body;
-    if (b) {
-      b.classList.add('pdf-export');
-      b.style.overflowX = 'visible';
-    }
-    const w = clonedDoc.querySelector('.wrap');
-    if (w) w.style.maxWidth = 'none';
-    const mtw = clonedDoc.querySelector('.mtw');
-    if (mtw) mtw.style.overflow = 'visible';
-    const tsc = clonedDoc.querySelector('.tscroll');
-    if (tsc) {
-      tsc.style.maxHeight = 'none';
-      tsc.style.overflow = 'visible';
-    }
-    const mt = clonedDoc.querySelector('.mt');
-    if (mt) {
-      mt.style.width = 'max-content';
-      mt.style.minWidth = '100%';
-      mt.style.tableLayout = 'auto';
-    }
-    clonedDoc.querySelectorAll('.mt th').forEach(th => {
-      th.style.position = 'static';
-    });
-  };
-  const finish = () => {
-    document.body.classList.remove('pdf-export');
+  let restored = false;
+  const doRestore = () => {
+    if (restored) return;
+    restored = true;
+    window.removeEventListener('afterprint', doRestore);
+    monthTableViewAll = hadViewAll;
+    page = prevPage;
     renderTable();
-    if (btn) btn.disabled = false;
   };
-  setTimeout(() => {
-    requestAnimationFrame(() => {
-      const capW = Math.max(el.scrollWidth, el.offsetWidth, document.documentElement.scrollWidth);
-      const capH = Math.max(el.scrollHeight, el.offsetHeight, document.documentElement.scrollHeight);
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: 'home-loan-compass.pdf',
-        image: { type: 'jpeg', quality: 0.92 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: bg,
-          scrollX: 0,
-          scrollY: 0,
-          /* Wider virtual viewport so nowrap columns are not clipped at viewport width */
-          windowWidth: capW,
-          windowHeight: capH,
-          onclone: onClone
-        },
-        /* Landscape = wider page for many nowrap columns */
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
-      html2pdf()
-        .set(opt)
-        .from(el)
-        .save()
-        .then(finish)
-        .catch(() => {
-          finish();
-          window.print();
-        });
-    });
-  }, 150);
+  window.addEventListener('afterprint', doRestore);
+  try {
+    window.print();
+  } catch (e) {
+    doRestore();
+  }
+  setTimeout(() => doRestore(), 2500);
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -1137,6 +1097,7 @@ function resetAll() {
   if (sr) sr.value = '';
   setOpAdjustMsg(false, '');
   document.getElementById('results')?.classList.remove('show');
+  setPrintEnabled(false);
   if (ci) {
     try {
       ci.destroy();
@@ -1151,7 +1112,7 @@ function resetAll() {
   try {
     localStorage.removeItem('hl-theme');
   } catch (e) { /* */ }
-  applyTheme('dark');
+  applyTheme('light');
 }
 
 // ── Calculate ──────────────────────────────────────────────────────────────
@@ -1207,6 +1168,7 @@ function calculate() {
   buildYearTable(rows, T);
 
   document.getElementById('results').classList.add('show');
+  setPrintEnabled(true);
   savePersistedState();
   setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth'}),100);
 }
