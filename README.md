@@ -60,10 +60,3 @@ There is no server, no sign-up, and no data leaves your machine unless you expor
 
 No build step, no `npm install`. Clone or download the file and open it locally or host it on any static site host (GitHub Pages, Netlify, etc.).
 
----
-
-## Publishing this project
-
-For richer search and social previews, add a `<meta name="description">` and Open Graph (`og:title`, `og:description`, `og:url`) tags to the `<head>` of `index.html`. The content above describes the tool in terms people search for: **India home loan calculator**, **OD vs standard home loan**, **MaxGain-style OD loan**, **prepayment amortisation**, and **floating rate schedule**.
-
----
