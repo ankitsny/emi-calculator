@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loan Compare</title>
+<title>Loan Compare — Standard vs OD</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -11,52 +11,41 @@
   --bg:#0a0b0f; --surface:#12141a; --surface2:#1a1d26; --border:#252836;
   --text:#e8eaf0; --muted:#6b7280;
   --std:#f97316; --std-dk:#7c2d12;
-  --od:#06b6d4;  --od-dk:#164e63;
+  --od:#06b6d4; --od-dk:#164e63;
   --accent:#a78bfa; --green:#4ade80; --red:#f87171; --yellow:#fbbf24;
-  --chart-grid: rgba(255,255,255,0.06);
-  --chart-tick: #64748b;
-  --chart-tooltip-bg: #1a1d26;
-  --chart-tooltip-border: #252836;
-  --chart-tooltip-title: #e8eaf0;
-  --chart-tooltip-body: #9ca3af;
+  --rate-color:#e879f9;
+  --chart-grid:rgba(255,255,255,0.06); --chart-tick:#64748b;
+  --chart-tooltip-bg:#1a1d26; --chart-tooltip-border:#252836;
+  --chart-tooltip-title:#e8eaf0; --chart-tooltip-body:#9ca3af;
 }
 html[data-theme="light"] {
-  --bg: #e8ecf4;
-  --surface: #ffffff;
-  --surface2: #f1f4fa;
-  --border: #c8d0e0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --std: #c2410c;
-  --std-dk: #7c2d12;
-  --od: #0e7490;
-  --od-dk: #155e75;
-  --accent: #6d28d9;
-  --green: #15803d;
-  --red: #b91c1c;
-  --yellow: #b45309;
-  --chart-grid: rgba(15,23,42,0.08);
-  --chart-tick: #475569;
-  --chart-tooltip-bg: #ffffff;
-  --chart-tooltip-border: #e2e8f0;
-  --chart-tooltip-title: #0f172a;
-  --chart-tooltip-body: #64748b;
+  --bg:#e8ecf4; --surface:#ffffff; --surface2:#f1f4fa; --border:#c8d0e0;
+  --text:#0f172a; --muted:#64748b; --std:#c2410c; --std-dk:#7c2d12;
+  --od:#0e7490; --od-dk:#155e75; --accent:#6d28d9;
+  --green:#15803d; --red:#b91c1c; --yellow:#b45309; --rate-color:#a21caf;
+  --chart-grid:rgba(15,23,42,0.08); --chart-tick:#475569;
+  --chart-tooltip-bg:#ffffff; --chart-tooltip-border:#e2e8f0;
+  --chart-tooltip-title:#0f172a; --chart-tooltip-body:#64748b;
 }
-html[data-theme="light"] body::before{
-  background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px);
-}
-html[data-theme="light"] .mt tr:hover td{background:rgba(0,0,0,.03);}
+html[data-theme="light"] body::before { background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px); }
+html[data-theme="light"] .mt tr:hover td { background:rgba(0,0,0,.03); }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(167,139,250,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:40px 24px 80px;}
-.top-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
-.theme-btn,.print-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s;}
+
+/* Top actions */
+.top-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.theme-btn,.print-btn,.export-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s;}
 .theme-btn{min-width:42px;font-size:16px;line-height:1;}
-.theme-btn:hover,.print-btn:hover{background:var(--surface2);border-color:var(--accent);}
-.print-btn{font-weight:600;letter-spacing:.04em;}
-.print-btn:disabled{opacity:.45;cursor:not-allowed;}
-.print-btn:disabled:hover{background:var(--surface);border-color:var(--border);}
+.theme-btn:hover,.print-btn:hover,.export-btn:hover{background:var(--surface2);border-color:var(--accent);}
+.print-btn,.export-btn{font-weight:600;letter-spacing:.04em;}
+.print-btn:disabled,.export-btn:disabled{opacity:.45;cursor:not-allowed;}
+.print-btn:disabled:hover,.export-btn:disabled:hover{background:var(--surface);border-color:var(--border);}
+.export-btn{color:var(--accent);border-color:rgba(167,139,250,.4);}
+.import-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid rgba(167,139,250,.4);background:var(--surface);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:background .15s;}
+.import-label:hover{background:var(--surface2);}
+#import-file-input{display:none;}
 
 /* Header */
 .tag{display:inline-block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 10px;border-radius:2px;margin-bottom:16px;}
@@ -69,8 +58,8 @@ h1 span{color:var(--accent);}
 .field:focus-within{border-color:var(--accent);}
 .field label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
 .field input,.field select{width:100%;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;}
-.field input[type="number"]{min-width:10rem;}
-.field select{min-width:8.5rem;}
+.field input[type="number"]{min-width:8rem;}
+.field select{min-width:7rem;}
 .field input::placeholder{color:var(--border);}
 .field select option{background:var(--surface2);color:var(--text);}
 html[data-theme="light"] .field select option{background:#fff;}
@@ -85,38 +74,53 @@ html[data-theme="light"] .field select option{background:#fff;}
 .loan-block{flex:1;min-width:min(100%,280px);border-radius:10px;padding:18px;border:1px solid;}
 .loan-block.std{background:rgba(249,115,22,.05);border-color:rgba(249,115,22,.3);}
 .loan-block.od{background:rgba(6,182,212,.05);border-color:rgba(6,182,212,.3);}
+html[data-theme="light"] .loan-block.std{background:rgba(249,115,22,.08);}
+html[data-theme="light"] .loan-block.od{background:rgba(6,182,212,.08);}
+html[data-theme="light"] .loan-block .field{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.1);}
 .lb-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .dot{width:9px;height:9px;border-radius:50%;}
 .dot-std{background:var(--std);} .dot-od{background:var(--od);}
 .lb-head h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
 .loan-block .field{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);margin-bottom:8px;}
-html[data-theme="light"] .loan-block.std{background:rgba(249,115,22,.08);}
-html[data-theme="light"] .loan-block.od{background:rgba(6,182,212,.08);}
-html[data-theme="light"] .loan-block .field{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.1);}
 .loan-block .field:last-child{margin-bottom:0;}
 .od-note{font-size:10px;color:var(--od);margin-top:8px;line-height:1.6;opacity:.8;}
 
-/* Collapsible panels */
+/* Panels */
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0;margin-bottom:14px;overflow:hidden;}
+.panel.rate-panel{border-color:rgba(232,121,249,.3);}
+html[data-theme="light"] .panel.rate-panel{border-color:rgba(162,28,175,.25);}
 .ph{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none;}
 .ph h3{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.ph.rate-panel-head h3{color:var(--rate-color);}
 .ph .arr{color:var(--muted);transition:transform .2s;font-size:14px;}
 .ph.open .arr{transform:rotate(180deg);}
 .pb{display:none;padding:0 20px 20px;}
 .pb.open{display:block;}
 .hint{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
 
-/* Event rows */
-.ev-row{display:grid;grid-template-columns:minmax(112px,1.1fr) minmax(104px,1fr) minmax(128px,1.2fr) minmax(160px,2fr) 40px;gap:10px;align-items:end;margin-bottom:8px;}
-.ev-row.pp-row{grid-template-columns:minmax(112px,1.1fr) minmax(104px,1fr) minmax(128px,1.2fr) minmax(160px,2fr) auto 40px;align-items:stretch;}
-.ev-row.pp-row .field{margin:0;}
-.ev-row.pp-row .op-actions{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;padding:8px 0;}
-.ev-row.pp-row .op-actions .del-btn{flex-shrink:0;}
-.ev-row.pp-row.pp-row--focus{outline:2px solid rgba(167,139,250,.55);outline-offset:3px;border-radius:10px;transition:outline .15s;}
-.ev-row .field{margin:0;}
-.ev-row .field input,.ev-row .field select{font-size:13px;}
+/* State file info box */
+.state-info{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.25);border-radius:10px;padding:16px 20px;margin-bottom:16px;}
+.state-info h4{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.state-info p{font-size:10px;color:var(--muted);line-height:1.75;margin-bottom:6px;}
+.state-info p:last-child{margin-bottom:0;}
+.state-info strong{color:var(--text);}
+.state-info ul{padding-left:16px;margin:6px 0;}
+.state-info ul li{font-size:10px;color:var(--muted);line-height:1.75;}
+
+/* State import/export modal */
+.state-modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.state-modal.open{display:flex;}
+.state-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);}
+.state-modal-dialog{position:relative;z-index:1;width:100%;max-width:520px;max-height:min(90vh,720px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;box-shadow:0 24px 48px rgba(0,0,0,.25);}
+.state-modal-dialog h2{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:14px;color:var(--text);}
+.state-modal-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);}
+.state-modal-actions .import-label{margin:0;}
+.state-modal-close{margin-left:auto;padding:8px 14px;font-size:11px;}
+
+/* Op/Rp rows — generic editable period grid */
 .op-row{display:grid;grid-template-columns:minmax(100px,1.1fr) minmax(100px,1fr) minmax(92px,1fr) minmax(92px,1fr) minmax(160px,1.2fr) minmax(140px,1.5fr) auto;gap:10px;align-items:stretch;margin-bottom:10px;grid-auto-flow:dense;}
-.op-row.op-row--focus{outline:2px solid rgba(167,139,250,.55);outline-offset:3px;border-radius:10px;transition:outline .15s;}
+.rp-row{display:grid;grid-template-columns:minmax(100px,1.1fr) minmax(100px,1fr) minmax(92px,1fr) minmax(92px,1fr) minmax(110px,1fr) minmax(110px,1fr) minmax(130px,1.3fr) auto;gap:10px;align-items:stretch;margin-bottom:10px;}
+.op-row.op-row--focus,.rp-row.rp-row--focus{outline:2px solid rgba(167,139,250,.55);outline-offset:3px;border-radius:10px;transition:outline .15s;}
 .op-till-wrap{display:flex;align-items:center;gap:10px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-sizing:border-box;width:100%;min-height:54px;}
 .op-till-wrap input{width:16px;height:16px;flex-shrink:0;}
 .op-till-spacer{min-height:54px;width:100%;box-sizing:border-box;}
@@ -127,21 +131,29 @@ html[data-theme="light"] .loan-block .field{background:rgba(255,255,255,.85);bor
 .cancel-op-btn:hover{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.25);color:var(--red);}
 .apply-op-btn{padding:7px 11px;font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-family:inherit;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);border-radius:6px;color:var(--accent);cursor:pointer;white-space:nowrap;}
 .apply-op-btn:hover{background:rgba(167,139,250,.22);}
-.apply-op-btn:disabled{opacity:.55;cursor:default;}
 .op-adjust-msg{font-size:10px;color:var(--green);line-height:1.6;margin:10px 0 0;padding:10px 12px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:8px;display:none;}
-.op-row .field{margin:0;padding:16px 18px 18px;}
-.op-row .field label{margin-bottom:8px;}
-.op-row .field input,.op-row .field select{font-size:14px;line-height:1.45;padding:6px 4px;min-height:30px;}
+.op-row .field,.rp-row .field{margin:0;padding:14px 16px 16px;}
+.op-row .field label,.rp-row .field label{margin-bottom:8px;}
+.op-row .field input,.op-row .field select,
+.rp-row .field input,.rp-row .field select{font-size:13px;line-height:1.45;padding:4px 2px;min-height:28px;}
 .op-actions .del-btn{flex-shrink:0;}
 .add-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:6px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;margin-top:4px;}
 .add-btn:hover{background:rgba(167,139,250,.2);}
 .del-btn{width:36px;height:36px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:6px;color:var(--red);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .del-btn:hover{background:rgba(248,113,113,.25);}
 
-/* Calc button */
+/* Part payment rows */
+.ev-row{display:grid;grid-template-columns:minmax(112px,1.1fr) minmax(104px,1fr) minmax(128px,1.2fr) minmax(160px,2fr) auto 40px;gap:10px;align-items:stretch;margin-bottom:8px;}
+.ev-row .field{margin:0;}
+.ev-row .field input,.ev-row .field select{font-size:13px;}
+.ev-row.pp-row--focus{outline:2px solid rgba(167,139,250,.55);outline-offset:3px;border-radius:10px;}
+
+/* Calc row */
 .calc-row{display:flex;gap:12px;align-items:stretch;margin-bottom:40px;flex-wrap:wrap;}
-.calc-btn{flex:1;min-width:200px;padding:16px;background:var(--accent);color:#0a0b0f;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.calc-btn{flex:1;min-width:200px;padding:16px;background:var(--accent);color:#fafafa;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
 .calc-btn:hover{background:#c4b5fd;transform:translateY(-1px);}
+html[data-theme="light"] .calc-btn{color:#fafafa;}
+html[data-theme="light"] .calc-btn:hover{background:#5b21b6;}
 .reset-btn{padding:16px 20px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .reset-btn:hover{color:var(--red);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.06);}
 
@@ -161,10 +173,10 @@ html[data-theme="light"] .loan-block .field{background:rgba(255,255,255,.85);bor
 
 /* Chart */
 .cw{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:36px;}
-.ctabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.ctabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .tab{padding:6px 14px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;}
-.tab.active{background:var(--accent);color:#0a0b0f;border-color:var(--accent);}
-html[data-theme="light"] .tab.active{color:#1e1b4b;}
+.tab.active{background:var(--accent);color:#fafafa;border-color:var(--accent);}
+html[data-theme="light"] .tab.active{color:#fafafa;}
 .cleg{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
 .li{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted);}
 .ls{width:18px;height:9px;border-radius:2px;}
@@ -191,28 +203,28 @@ html[data-theme="light"] .tab.active{color:#1e1b4b;}
 .mt tr.rod td:first-child{border-left:2px solid var(--od);}
 .mt tr.rod-def td{background:rgba(6,182,212,.018);}
 .mt tr.rod-def td:first-child{border-left:2px solid rgba(6,182,212,.28);}
-.mt .cs{color:var(--std);} .mt .co{color:var(--od);} .mt .cg{color:var(--green);} .mt .cr{color:var(--red);} .mt .ca{color:var(--accent);} .mt .cm{color:var(--muted);}
+.mt tr.rrate td{background:rgba(232,121,249,.025);}
+.mt tr.rrate td:first-child{border-left:2px solid rgba(232,121,249,.55);}
+.mt .cs{color:var(--std);} .mt .co{color:var(--od);} .mt .cg{color:var(--green);} .mt .cr{color:var(--red);} .mt .ca{color:var(--accent);} .mt .cm{color:var(--muted);} .mt .crate{color:var(--rate-color);}
+.mt .rate-mom{font-size:11px;font-weight:700;margin-right:4px;vertical-align:middle;line-height:1;}
+.mt .rate-mom-up{color:var(--red);}
+.mt .rate-mom-dn{color:var(--green);}
 .m-lbl{margin-right:2px;}
 .m-cell-badges{display:inline-flex;gap:6px;align-items:center;margin-left:8px;flex-wrap:wrap;vertical-align:middle;}
 .m-cell-badges .bdg{margin-left:0;}
 .bdg{display:inline-block;font-size:8px;padding:1px 5px;border-radius:3px;margin-left:4px;}
 .bpp{background:rgba(251,191,36,.15);color:var(--yellow);}
-.bod{background:rgba(6,182,212,.15);color:var(--od);}
-.bod-def{background:rgba(6,182,212,.1);color:rgba(6,182,212,.92);}
-.bod-zero{background:rgba(251,191,36,.14);color:var(--yellow);}
 .bod-up{background:rgba(74,222,128,.14);color:var(--green);}
 .bod-dn{background:rgba(248,113,113,.14);color:var(--red);}
 .bod-flat{background:rgba(107,114,128,.14);color:var(--muted);}
+.brate{background:rgba(232,121,249,.14);color:var(--rate-color);}
 .dlt{display:inline-block;font-size:9px;margin-left:6px;letter-spacing:.02em;vertical-align:middle;font-weight:600;}
-.dlt-up{color:var(--green);}
-.dlt-down{color:var(--red);}
-.dlt-new{font-size:9px;margin-left:4px;color:var(--green);font-weight:600;}
+.dlt-up{color:var(--green);} .dlt-down{color:var(--red);} .dlt-new{font-size:9px;margin-left:4px;color:var(--green);font-weight:600;}
 
 /* Pagination */
 .pgn{display:flex;gap:10px;align-items:center;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap;}
 .pg-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto;}
 .pg-sel{font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;}
-.pg-sel:focus{outline:1px solid var(--accent);outline-offset:1px;}
 .pg-mid{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
 .pb2{padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;}
 .pb2:hover,.pb2.act{background:var(--surface2);color:var(--text);}
@@ -227,26 +239,18 @@ html[data-theme="light"] .tab.active{color:#1e1b4b;}
 .yt td{padding:10px 14px;border-bottom:1px solid var(--border);text-align:right;font-size:11.5px;white-space:nowrap;}
 .yt td:first-child{text-align:left;}
 .yt .tot td{border-bottom:none;font-weight:700;background:var(--surface2);}
-.yt .cs{color:var(--std);} .yt .co{color:var(--od);} .yt .cg{color:var(--green);} .yt .cr{color:var(--red);} .yt .ca{color:var(--accent);} .yt .cm{color:var(--muted);}
+.yt .cs{color:var(--std);} .yt .co{color:var(--od);} .yt .cg{color:var(--green);} .yt .cr{color:var(--red);} .yt .ca{color:var(--accent);} .yt .cm{color:var(--muted);} .yt .crate{color:var(--rate-color);}
 
 .results{display:none;}
 .results.show{display:block;}
-html[data-theme="light"] .calc-btn{color:#1e1b4b;}
+
 @media print {
-  @page {
-    size: landscape;
-    margin: 10mm;
-  }
+  @page{size:landscape;margin:10mm;}
   body::before{display:none!important;}
-  html,body{
-    width:auto!important;
-    min-height:0!important;
-    overflow:visible!important;
-    print-color-adjust:exact;
-    -webkit-print-color-adjust:exact;
-  }
+  html,body{width:auto!important;min-height:0!important;overflow:visible!important;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
   .top-actions,.calc-row,.add-btn,.ph .arr{display:none!important;}
-  .del-btn,.edit-op-btn,.apply-op-btn,.cancel-op-btn,.reset-btn,.print-btn,.theme-btn{display:none!important;}
+  .state-modal{display:none!important;}
+  .del-btn,.edit-op-btn,.apply-op-btn,.cancel-op-btn,.reset-btn,.print-btn,.theme-btn,.export-btn,.import-label{display:none!important;}
   .wrap{max-width:none!important;width:auto!important;padding:0!important;margin:0!important;}
   .results{display:block!important;}
   .cw{margin-bottom:16px!important;break-inside:avoid;}
@@ -254,30 +258,31 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
   .mtw,.ytw{overflow:visible!important;break-inside:avoid;}
   .tscroll{max-height:none!important;overflow:visible!important;}
   #pgn{display:none!important;}
-  .mt{width:max-content!important;min-width:100%!important;table-layout:auto!important;font-size:10px!important;}
+  .mt{width:max-content!important;min-width:100%!important;font-size:10px!important;}
   .mt th{position:static!important;}
-  .mt td,.mt th{padding:6px 8px!important;}
+  .mt td,.mt th{padding:5px 7px!important;}
   .yt{font-size:10px!important;}
-  .mt tr:hover td,.mt tr.rpp td,.mt tr.rod td,.mt tr.rod-def td{background:transparent!important;}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
+
 <div class="top-actions">
-  <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light / dark theme" aria-label="Toggle theme">☀️</button>
-  <button type="button" class="print-btn" id="printBtn" disabled onclick="printReport()" title="Print report (after you calculate)">Print</button>
+  <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark theme" aria-label="Toggle theme">☀️</button>
+  <button type="button" class="export-btn" id="stateModalOpenBtn" onclick="openStateModal()" title="Save or load a JSON state file">Import / Export state</button>
+  <button type="button" class="print-btn" id="printBtn" disabled onclick="printReport()">Print</button>
 </div>
 
-<div class="tag">Loan Compare, Standard vs OD Backed</div>
+<div class="tag">Loan Compare · Standard vs OD</div>
 <h1>Standard vs <span>OD Loan</span><br>Deep Compare</h1>
-<p class="sub">// Part payments · OD period overrides · Month drill-down · r/indianrealestate AMA</p>
+<p class="sub">// Part payments · OD balance periods · Rate change periods · Month drill-down · r/indianrealestate AMA</p>
 
 <!-- Base inputs -->
 <div class="g3">
   <div class="field"><label>Principal (₹)</label><input type="number" id="principal" value="5000000"><div class="unit">e.g. 50,00,000 = 50 Lakhs</div></div>
-  <div class="field"><label>Tenure (Years)</label><input type="number" id="tenure" value="20" min="1" max="30" onchange="onLoanTimelineChanged()"></div>
-  <div class="field"><label>Loan start</label>
+  <div class="field"><label>Tenure (Years)</label><input type="number" id="tenure" value="20" min="1" max="40" onchange="onLoanTimelineChanged()"></div>
+  <div class="field"><label>Loan Start</label>
     <div class="loan-start-pair">
       <select id="startYear" onchange="onLoanTimelineChanged()" aria-label="Start year"></select>
       <select id="startMonth" onchange="onLoanTimelineChanged()" aria-label="Start month">
@@ -286,57 +291,62 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
         <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
       </select>
     </div>
-    <div class="unit">First EMI month; part-payment / OD dates use this anchor; year lists span start year through start + tenure</div>
+    <div class="unit">First EMI month; all event dates use this anchor</div>
   </div>
 </div>
 
-<!-- Loan rate blocks -->
+<!-- Loan blocks -->
 <div class="loan-cols">
   <div class="loan-block std">
     <div class="lb-head"><div class="dot dot-std"></div><h3>Standard Home Loan</h3></div>
-    <div class="field"><label>Interest Rate % p.a.</label><input type="number" id="stdRate" value="8.50" step="0.05"><div class="unit">floating (RBI repo linked)</div></div>
+    <div class="field"><label>Base Interest Rate % p.a.</label><input type="number" id="stdRate" value="8.50" step="0.05" onchange="onBaseRateChanged()"><div class="unit">floating (RBI repo linked) — default for all months without a rate override</div></div>
   </div>
   <div class="loan-block od">
     <div class="lb-head"><div class="dot dot-od"></div><h3>OD Loan (SBI MaxGain / ICICI Money Saver)</h3></div>
-    <div class="field"><label>Interest Rate % p.a.</label><input type="number" id="odRate" value="8.75" step="0.05"><div class="unit">typically +0.25% over standard</div></div>
+    <div class="field"><label>Base Interest Rate % p.a.</label><input type="number" id="odRate" value="8.75" step="0.05" onchange="onBaseRateChanged()"><div class="unit">typically +0.25% over standard</div></div>
     <div class="field"><label>Default OD Balance Parked (₹)</label><input type="number" id="odDef" value="500000"><div class="unit">base amount kept in OD account every month</div></div>
-    <p class="od-note">// Interest charged only on (Outstanding − OD Balance). Every ₹3L parked on ₹1Cr loan ≈ 0.25% rate reduction.</p>
+    <p class="od-note">// Interest only on (Outstanding − OD Balance). Every ₹3L parked on ₹1Cr ≈ 0.25% effective rate cut.</p>
   </div>
 </div>
 
-<!-- Part Payments -->
+<!-- Part Payments panel -->
 <div class="panel">
-  <div class="ph" onclick="togglePanel(this)">
-    <h3>↳ Part Payments / Prepayments</h3><span class="arr">▾</span>
-  </div>
+  <div class="ph" onclick="togglePanel(this)"><h3>↳ Part Payments / Prepayments</h3><span class="arr">▾</span></div>
   <div class="pb">
-    <p class="hint">One-time lump-sum payments applied before that month's EMI. Choose to apply to Standard only, OD only, or both. Free prepayment on floating loans — most banks allow this.</p>
+    <p class="hint">One-time lump-sum payments applied before that month's EMI. Free prepayment is allowed on most floating-rate home loans. Choose Standard only, OD only, or both.</p>
     <div id="pp-list"></div>
     <button class="add-btn" onclick="addPP()">+ Add Part Payment</button>
   </div>
 </div>
 
-<!-- OD Balance Periods -->
+<!-- OD Balance Periods panel -->
 <div class="panel">
-  <div class="ph" onclick="togglePanel(this)">
-    <h3>↳ OD Balance — Period Overrides</h3><span class="arr">▾</span>
-  </div>
+  <div class="ph" onclick="togglePanel(this)"><h3>↳ OD Balance — Period Overrides</h3><span class="arr">▾</span></div>
   <div class="pb">
-    <p class="hint">Override the default OD balance for a specific month range. Model bonus months, salary hikes, lean periods. Ranges can overlap — last matching range wins. Any calendar month that falls <strong>between</strong> two override ranges (a gap) uses <strong>₹0</strong> parked OD, not the default. <strong>Till End</strong> appears only on the <em>last</em> period row. Click <strong>Edit</strong> on a row to show <strong>Apply</strong> and <strong>Cancel</strong>; Apply saves that row and runs <strong>Calculate &amp; Compare</strong>. When you <strong>Calculate</strong>, if a new period starts after an open-ended one, the previous period is closed automatically the month before that start.</p>
+    <p class="hint">Override the default OD balance for specific periods. Model salary hikes, annual bonus months, or lean periods. Ranges can overlap — last matching range wins. Gaps between ranges = ₹0 parked. <strong>Till End</strong> appears only on the last row.</p>
     <p class="op-adjust-msg" id="op-adjust-msg" role="status"></p>
     <div id="op-list"></div>
-    <button class="add-btn" onclick="addOP()">+ Add OD Period Override</button>
+    <button class="add-btn" onclick="addOP()">+ Add OD Period</button>
+  </div>
+</div>
+
+<!-- Rate Change Periods panel -->
+<div class="panel rate-panel">
+  <div class="ph rate-panel-head" onclick="togglePanel(this)"><h3>↳ Interest Rate — Period Overrides</h3><span class="arr">▾</span></div>
+  <div class="pb">
+    <p class="hint">Model RBI repo rate cuts/hikes or bank-specific re-pricing. Each period sets the Standard rate and/or OD rate for that window. Gaps between periods use the base rates set above. <strong>Till End</strong> on the last row covers the remainder of the loan. Changing the base rates above auto-updates periods with matching rates.</p>
+    <div id="rp-list"></div>
+    <button class="add-btn" onclick="addRP()">+ Add Rate Period</button>
   </div>
 </div>
 
 <div class="calc-row">
   <button type="button" class="calc-btn" onclick="calculate()">↳ Calculate &amp; Compare</button>
-  <button type="button" class="reset-btn" onclick="resetAll()" title="Clear saved data and restore defaults">Reset / Clear</button>
+  <button type="button" class="reset-btn" onclick="resetAll()">Reset / Clear</button>
 </div>
 
 <!-- RESULTS -->
 <div class="results" id="results">
-
   <div class="stitle">Summary</div>
   <div class="stats">
     <div class="sc"><div class="lbl">Standard — Base EMI</div><div class="val c-std" id="s-emi">—</div><div class="hint2" id="s-total"></div></div>
@@ -347,7 +357,6 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
     <div class="sc"><div class="lbl">Total Saved (OD Strategy)</div><div class="val c-save" id="saved">—</div><div class="hint2">lifetime interest saving</div></div>
   </div>
 
-  <!-- Charts -->
   <div class="stitle">Charts</div>
   <div class="cw">
     <div class="ctabs">
@@ -365,32 +374,30 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
     <div class="cc"><canvas id="chart"></canvas></div>
   </div>
 
-  <!-- Month table -->
   <div class="stitle">Month-by-Month Detail</div>
   <div class="mtw">
     <div class="tcontrols">
       <div class="vt">
-        <button class="vbtn active" onclick="setView('both',this)">Both</button>
-        <button class="vbtn" onclick="setView('std',this)">Standard</button>
-        <button class="vbtn" onclick="setView('od',this)">OD Only</button>
-        <button class="vbtn" onclick="setView('diff',this)">Diff</button>
+        <button type="button" class="vbtn active" data-month-view="both" onclick="setView('both',this)">Both</button>
+        <button type="button" class="vbtn" data-month-view="std" onclick="setView('std',this)">Standard</button>
+        <button type="button" class="vbtn" data-month-view="od" onclick="setView('od',this)">OD Only</button>
+        <button type="button" class="vbtn" data-month-view="rates" onclick="setView('rates',this)">Rates</button>
+        <button type="button" class="vbtn" data-month-view="diff" onclick="setView('diff',this)">Diff</button>
       </div>
-      <input class="sfld" id="srch" placeholder="Search month, year, event…" oninput="filterTable()">
+      <input class="sfld" id="srch" placeholder="Search month, year, prepay, rate change…" oninput="filterTable()">
       <span style="font-size:10px;color:var(--muted)" id="rcnt"></span>
     </div>
-    <div class="tscroll">
-      <table class="mt"><thead id="mt-head"></thead><tbody id="mt-body"></tbody></table>
-    </div>
+    <div class="tscroll"><table class="mt"><thead id="mt-head"></thead><tbody id="mt-body"></tbody></table></div>
     <div class="pgn" id="pgn"></div>
   </div>
 
-  <!-- Year table -->
   <div class="stitle">Year-by-Year Summary</div>
   <div class="ytw">
     <table class="yt">
       <thead>
         <tr>
           <th style="text-align:left">Year</th>
+          <th>Std Rate</th><th>OD Rate</th>
           <th>Std Principal</th><th>Std Interest</th><th>Std Balance</th>
           <th>OD Principal</th><th>OD Int (eff)</th><th>OD Balance</th>
           <th>Prepayments</th><th>Annual Saving</th>
@@ -399,1361 +406,621 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
       <tbody id="yt-body"></tbody>
     </table>
   </div>
-
-</div><!-- /results -->
+</div>
 </div><!-- /wrap -->
 
-<script>
-// ── State ──────────────────────────────────────────────────────────────────
-let pps = [];           // prepays
-let ops = [];           // OD period overrides
-let ppEditingId = null; // part-payment row in edit mode
-let ppEditSnapshot = null;
-let odEditingId = null; // OD override row in edit mode (Apply / Cancel visible)
-let odEditSnapshot = null; // shallow clone for cancel
-let schedule = [];      // full computed schedule
-let filtered = [];
-let view = 'both';
-let chartView = 'both'; // 'both', 'std', 'od'
-let page = 1;
-const MONTH_PAGE_SIZES = [12, 24, 48, 96];
-let monthPageSize = 24;
-let monthTableViewAll = false;
-function normalizeMonthPageSize(n) {
-  const x = parseInt(n, 10);
-  return MONTH_PAGE_SIZES.includes(x) ? x : 24;
-}
-function setMonthTablePageMode(val) {
-  if (val === 'all') monthTableViewAll = true;
-  else {
-    monthTableViewAll = false;
-    monthPageSize = normalizeMonthPageSize(val);
-  }
-  page = 1;
-  renderTable();
-  try {
-    savePersistedState();
-  } catch (e) { /* */ }
-}
-let ci = null;          // chart instance
-let cd = {};            // chart data
-
-const LS_KEY = 'hl-compass-v1';
-const INPUT_DEFAULTS = { principal: '5000000', tenure: '20', startYear: '2025', startMonth: '1', stdRate: '8.50', odRate: '8.75', odDef: '500000' };
-function getLoanStartMonth() {
-  const m = parseInt(document.getElementById('startMonth')?.value, 10);
-  if (Number.isNaN(m) || m < 1 || m > 12) return 1;
-  return m;
-}
-function getLoanYearBounds() {
-  const sy = parseInt(document.getElementById('startYear')?.value, 10) || 2025;
-  const ten = parseInt(document.getElementById('tenure')?.value, 10) || 20;
-  const t = Math.max(1, Math.min(ten, 40));
-  return { minY: sy, maxY: sy + t };
-}
-function yearOptionsInnerHtml(selected, withBlank, minY, maxY) {
-  const b = getLoanYearBounds();
-  const lo = minY != null ? minY : b.minY;
-  const hi = maxY != null ? maxY : b.maxY;
-  const loY = Math.min(lo, hi);
-  const hiY = Math.max(lo, hi);
-  let h = '';
-  const selNum = selected !== '' && selected != null && !Number.isNaN(parseInt(String(selected), 10))
-    ? parseInt(String(selected), 10)
-    : NaN;
-  if (withBlank) {
-    h += `<option value=""${Number.isNaN(selNum) ? ' selected' : ''}>—</option>`;
-  }
-  for (let y = loY; y <= hiY; y++) {
-    h += `<option value="${y}"${y === selNum ? ' selected' : ''}>${y}</option>`;
-  }
-  return h;
-}
-function fillStartYearSelect(optYear) {
-  const sel = document.getElementById('startYear');
-  if (!sel) return;
-  const { minY, maxY } = getLoanYearBounds();
-  let curNum = optYear != null ? parseInt(String(optYear), 10) : parseInt(sel.value, 10);
-  if (Number.isNaN(curNum)) curNum = minY;
-  curNum = Math.max(minY, Math.min(maxY, curNum));
-  sel.innerHTML = yearOptionsInnerHtml(curNum, false, minY, maxY);
-}
-function onLoanTimelineChanged() {
-  fillStartYearSelect();
-  pps.forEach(p => {
-    const { minY, maxY } = getLoanYearBounds();
-    let y = parseInt(p.year, 10) || 0;
-    if (y && (y < minY || y > maxY)) {
-      y = Math.max(minY, Math.min(maxY, y));
-      p.year = y;
-    }
-  });
-  redrawAllPPRows();
-  redrawAllOPRows();
-  try {
-    savePersistedState();
-  } catch (e) { /* */ }
-}
-function refreshChartForTheme() {
-  if (!schedule || !schedule.length) return;
-  const tab = document.querySelector('.tab.active');
-  if (!tab) return;
-  const tlab = tab.textContent.toLowerCase();
-  const type = tlab.includes('monthly') ? 'monthly'
-    : tlab.includes('cumulative') ? 'cumulative'
-      : tlab.includes('yearly') ? 'yearly' : 'balance';
-  renderChart(type);
-}
-function applyTheme(mode) {
-  const m = mode === 'light' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', m);
-  try {
-    localStorage.setItem('hl-theme', m);
-  } catch (e) { /* */ }
-  const b = document.getElementById('themeBtn');
-  if (b) b.textContent = m === 'light' ? '☀️' : '🌙';
-  refreshChartForTheme();
-}
-function initTheme() {
-  let t = 'light';
-  try {
-    if (localStorage.getItem('hl-theme') === 'dark') t = 'dark';
-  } catch (e) { /* */ }
-  applyTheme(t);
-}
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  applyTheme(cur === 'light' ? 'dark' : 'light');
-  try {
-    savePersistedState();
-  } catch (e) { /* */ }
-}
-function setPrintEnabled(on) {
-  const b = document.getElementById('printBtn');
-  if (b) b.disabled = !on;
-}
-/** Print uses @media print (landscape, full-width tables). Temporarily show all month rows so long tables print completely. */
-function printReport() {
-  const res = document.getElementById('results');
-  if (!res || !res.classList.contains('show')) return;
-  const hadViewAll = monthTableViewAll;
-  const prevPage = page;
-  monthTableViewAll = true;
-  page = 1;
-  renderTable();
-  window.scrollTo(0, 0);
-  let restored = false;
-  const doRestore = () => {
-    if (restored) return;
-    restored = true;
-    window.removeEventListener('afterprint', doRestore);
-    monthTableViewAll = hadViewAll;
-    page = prevPage;
-    renderTable();
-  };
-  window.addEventListener('afterprint', doRestore);
-  try {
-    window.print();
-  } catch (e) {
-    doRestore();
-  }
-  setTimeout(() => doRestore(), 2500);
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-const uid = () => Date.now() + Math.random();
-
-function fmt(n) {
-  const a = Math.abs(n), s = n < 0 ? '-' : '';
-  if (a >= 1e7) return s+'₹'+(a/1e7).toFixed(2)+' Cr';
-  if (a >= 1e5) return s+'₹'+(a/1e5).toFixed(2)+' L';
-  return s+'₹'+Math.round(a).toLocaleString('en-IN');
-}
-function fmtR(n) { return '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN'); }
-
-/** Month-over-month ₹ change for table (non-zero). */
-function fmtDeltaSpan(delta, titlePrefix) {
-  if (delta == null || Math.abs(delta) < 1) return '';
-  const up = delta > 0;
-  const sym = up ? '+' : '−';
-  const abs = fmt(Math.abs(delta));
-  const cls = up ? 'dlt-up' : 'dlt-down';
-  const t = (titlePrefix || 'Change') + (up ? ' (increase' : ' (decrease') + ` vs prior month: ${fmt(delta)})`;
-  return `<span class="dlt ${cls}" title="${t.replace(/"/g, '&quot;')}">${sym}${abs}</span>`;
-}
-function ppMoMHtml(r) {
-  const pp = (r.ppS || 0) + (r.ppO || 0);
-  const d = r.ppDelta;
-  if (d == null || Math.abs(d) < 1) return '';
-  if (pp > 0 && Math.abs(d - pp) < 1) {
-    return '<span class="dlt-new" title="New part payment vs ₹0 last month">▲ new</span>';
-  }
-  return fmtDeltaSpan(d, 'Part payment');
-}
-
-function monthStr(m, startYear, startMonth) {
-  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
-  const d = new Date(startYear, sm - 1 + (m - 1), 1);
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-// ── Panel toggle ───────────────────────────────────────────────────────────
-function togglePanel(h) {
-  h.classList.toggle('open');
-  h.nextElementSibling.classList.toggle('open');
-}
-
-// ── OD Periods (MO_SHORT + monthSelect used by OD + part payments) ─────────
-const MO_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function monthSelectOptionsHtml(selected) {
-  let h = '<option value=""></option>';
-  for (let m = 1; m <= 12; m++) {
-    const sel = (String(selected) === String(m) || selected === m) ? ' selected' : '';
-    h += `<option value="${m}"${sel}>${MO_SHORT[m - 1]}</option>`;
-  }
-  return h;
-}
-
-// ── Part Payments ──────────────────────────────────────────────────────────
-function clonePpSnapshot(p) {
-  return { id: p.id, year: p.year, month: p.month, amount: p.amount, to: p.to };
-}
-function ppRowInnerHTML(p) {
-  const id = p.id;
-  const editing = ppEditingId === id;
-  const ro = editing ? '' : ' disabled';
-  const year = p.year || '';
-  const month = p.month || '';
-  const amt = p.amount != null && p.amount !== '' && !Number.isNaN(Number(p.amount)) ? p.amount : '';
-  const toVal = p.to === 'std' || p.to === 'od' ? p.to : 'both';
-  const actionsHtml = editing
-    ? `<button type="button" class="apply-op-btn" onclick="commitPPRow(${id})">Apply</button>
-      <button type="button" class="cancel-op-btn" onclick="cancelPPRowEdit(${id})">Cancel</button>`
-    : `<button type="button" class="edit-op-btn" onclick="beginPPRowEdit(${id})">Edit</button>`;
-  return `
-    <div class="field"><label>Year</label><select onchange="updPP(${id},'year',this.value)" id="ppYear${id}"${ro}>${yearOptionsInnerHtml(year, true)}</select></div>
-    <div class="field"><label>Month</label><select onchange="updPP(${id},'month',this.value)" id="ppMonth${id}"${ro}>${monthSelectOptionsHtml(month)}</select></div>
-    <div class="field"><label>Amount ₹</label><input type="number" placeholder="200000" value="${amt}" onchange="updPP(${id},'amount',this.value)" id="ppAmount${id}"${ro}></div>
-    <div class="field"><label>Apply To</label>
-      <select onchange="updPP(${id},'to',this.value)" id="ppTo${id}"${ro}>
-        <option value="both" ${toVal === 'both' ? 'selected' : ''}>Both loans</option>
-        <option value="std"  ${toVal === 'std' ? 'selected' : ''}>Standard only</option>
-        <option value="od"   ${toVal === 'od' ? 'selected' : ''}>OD only</option>
-      </select>
+<div id="state-modal" class="state-modal" aria-hidden="true">
+  <div class="state-modal-backdrop" onclick="closeStateModal()" aria-hidden="true"></div>
+  <div class="state-modal-dialog" role="dialog" aria-labelledby="state-modal-title" aria-modal="true">
+    <h2 id="state-modal-title">Import / Export state</h2>
+    <div class="state-info">
+      <h4>When &amp; Why to Use State Files</h4>
+      <p>A <strong>state file</strong> is a snapshot of everything you've entered: principal, rates, tenure, part payments, OD periods, and rate overrides — saved as a readable <strong>.json file</strong> on your device.</p>
+      <ul>
+        <li><strong>Share scenarios</strong> — send a colleague or advisor your exact scenario without screen-sharing</li>
+        <li><strong>Compare alternatives</strong> — save "Scenario A: 20yr tenure" and "Scenario B: 15yr tenure + prepayment" as separate files</li>
+        <li><strong>Resume later</strong> — browser storage clears on some devices (incognito, iOS Safari); a state file is permanent</li>
+        <li><strong>Audit trail</strong> — keep a dated file for each time your loan rate changes, so you have a history</li>
+        <li><strong>Team review</strong> — share a JSON file with your CA or broker so they can load and verify your assumptions</li>
+      </ul>
+      <p>Use <strong>Export state</strong> after you run <strong>Calculate</strong> (export is disabled until a report is shown). <strong>Import state</strong> replaces your current inputs.</p>
     </div>
-    <div class="op-actions">
-      ${actionsHtml}
-      <button type="button" class="del-btn" onclick="delPP(${id})" aria-label="Remove part payment">✕</button>
-    </div>`;
+    <div class="state-modal-actions">
+      <label class="import-label" title="Load a previously exported state JSON file">
+        Import state
+        <input type="file" id="import-file-input" accept=".json,application/json" onchange="importStateFile(event)">
+      </label>
+      <button type="button" class="export-btn" id="exportBtnModal" disabled onclick="exportStateFile()" title="Export all inputs as JSON (available after Calculate)">Export state</button>
+      <button type="button" class="reset-btn state-modal-close" onclick="closeStateModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────────────────────
+let pps=[], ops=[], rps=[];
+let ppEditingId=null, ppEditSnapshot=null;
+let odEditingId=null, odEditSnapshot=null;
+let rpEditingId=null, rpEditSnapshot=null;
+let rpChainUndoOnCancel=null, opChainUndoOnCancel=null; //{newRowId,penSnap} when Add demotes Till End tail until Apply/Cancel
+let schedule=[], filtered=[];
+let view='both', chartView='both';
+let page=1;
+const MONTH_PAGE_SIZES=[12,24,48,96];
+let monthPageSize=24, monthTableViewAll=false;
+let ci=null, cd={};
+const LS_KEY='hl-compass-v2';
+const MO_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const INPUT_DEFAULTS={principal:'5000000',tenure:'20',startYear:'2025',startMonth:'1',stdRate:'8.50',odRate:'8.75',odDef:'500000'};
+
+// ─── Utilities ──────────────────────────────────────────────────────────────
+const uid=()=>Date.now()+Math.random();
+function fmt(n){const a=Math.abs(n),s=n<0?'-':'';if(a>=1e7)return s+'₹'+(a/1e7).toFixed(2)+' Cr';if(a>=1e5)return s+'₹'+(a/1e5).toFixed(2)+' L';return s+'₹'+Math.round(a).toLocaleString('en-IN');}
+function fmtR(n){return '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');}
+function fmtPct(v){return v!=null&&!isNaN(v)?v.toFixed(2)+'%':'—';}
+/** Red ↑ vs prior month if rate increased, green ↓ if reduced; nothing if unchanged or no prior. */
+function rateMomArrowHtml(cur,prev){
+  if(prev==null||cur==null||typeof cur!=='number'||typeof prev!=='number'||isNaN(cur)||isNaN(prev))return '';
+  const d=cur-prev;
+  if(d>0.0005)return '<span class="rate-mom rate-mom-up" title="vs prior month: higher">↑</span>';
+  if(d<-0.0005)return '<span class="rate-mom rate-mom-dn" title="vs prior month: lower">↓</span>';
+  return '';
 }
-function redrawAllPPRows() {
-  pps.forEach(p => {
-    const div = document.getElementById('pp' + p.id);
-    if (div) div.innerHTML = ppRowInnerHTML(p);
-  });
+function fmtDeltaSpan(delta,title){if(delta==null||Math.abs(delta)<0.001)return '';const up=delta>0,sym=up?'+':'−',abs=fmt(Math.abs(delta)),cls=up?'dlt-up':'dlt-down',t=(title||'Change')+(up?' (increase':' (decrease')+` vs prior: ${fmt(delta)})`;return `<span class="dlt ${cls}" title="${t.replace(/"/g,'&quot;')}">${sym}${abs}</span>`;}
+function getLoanStartMonth(){const m=parseInt(document.getElementById('startMonth')?.value,10);return(isNaN(m)||m<1||m>12)?1:m;}
+function saneCalendarYear(v){
+  const s=String(v==null?'':v).trim();
+  if(!/^\d{4}$/.test(s))return 0;
+  const n=parseInt(s,10);
+  return(!isNaN(n)&&n>=1990&&n<=2120)?n:0;
 }
-function addPP(year = '', month = '', amt = '', to = 'both', options = {}) {
-  const { skipAutoEdit = false } = options;
-  const id = uid();
-  const toVal = to === 'std' || to === 'od' ? to : 'both';
-  pps.push({
-    id,
-    year: year ? parseInt(year, 10) : 0,
-    month: month ? parseInt(month, 10) : 0,
-    amount: amt !== '' && amt != null ? parseFloat(amt) : 0,
-    to: toVal
-  });
-  const p = pps[pps.length - 1];
-  if (!skipAutoEdit) {
-    if (ppEditingId && ppEditingId !== id) cancelPPRowEdit(ppEditingId);
-    if (odEditingId) cancelOPRowEdit(odEditingId);
-    ppEditingId = id;
-    ppEditSnapshot = clonePpSnapshot(p);
-  }
-  const div = document.createElement('div');
-  div.className = 'ev-row pp-row';
-  div.id = 'pp' + id;
-  document.getElementById('pp-list').appendChild(div);
-  /* Same pattern as addOP + redrawAllOPRows: redraw picks up ppEditingId so the new row is editable in one step */
-  redrawAllPPRows();
-  if (!skipAutoEdit) {
-    div.classList.add('pp-row--focus');
-    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    requestAnimationFrame(() => {
-      const el = document.getElementById('ppYear' + id);
-      if (el) {
-        el.focus();
-        try {
-          el.select();
-        } catch (e) { /* */ }
+function saneCalendarMonth(v){
+  const s=String(v==null?'':v).trim();
+  if(!/^\d{1,2}$/.test(s))return 0;
+  const n=parseInt(s,10);
+  return(!isNaN(n)&&n>=1&&n<=12)?n:0;
+}
+function getLoanYearBounds(){
+  let sy=saneCalendarYear(document.getElementById('startYear')?.value)||2025;
+  const ten=Math.max(1,Math.min(parseInt(document.getElementById('tenure')?.value,10)||20,40));
+  return{minY:sy,maxY:sy+ten};
+}
+function monthStr(m,startYear,startMonth){const sm=startMonth>=1&&startMonth<=12?startMonth:1;const d=new Date(startYear,sm-1+(m-1),1);return `${MO_SHORT[d.getMonth()]} ${d.getFullYear()}`;}
+function yearMonthToAbsMonth(year,month,startYear,startMonth){if(!year||!month)return 0;const sm=startMonth>=1&&startMonth<=12?startMonth:1;return(year*12+(month-1))-(startYear*12+(sm-1))+1;}
+function absScheduleIndexToYearMonth(absIdx,startYear,startMonth){const sm=startMonth>=1&&startMonth<=12?startMonth:1;const d=new Date(startYear,sm-1+(absIdx-1),1);return{year:d.getFullYear(),month:d.getMonth()+1};}
+
+function yearOptionsInnerHtml(selected,withBlank,minY,maxY){
+  const b=getLoanYearBounds();let lo=minY!=null?minY:b.minY;const hi=maxY!=null?maxY:b.maxY;
+  if(lo>hi)lo=hi;
+  const loY=Math.min(lo,hi),hiY=Math.max(lo,hi);
+  let h='';const selNum=selected!==''&&selected!=null&&!isNaN(parseInt(String(selected),10))?parseInt(String(selected),10):NaN;
+  if(withBlank)h+=`<option value=""${isNaN(selNum)?' selected':''}>—</option>`;
+  for(let y=loY;y<=hiY;y++)h+=`<option value="${y}"${y===selNum?' selected':''}>${y}</option>`;
+  return h;
+}
+function monthSelectOptionsHtml(selected){
+  let h='<option value=""></option>';
+  for(let m=1;m<=12;m++){const sel=(String(selected)===String(m)||selected===m)?' selected':'';h+=`<option value="${m}"${sel}>${MO_SHORT[m-1]}</option>`;}
+  return h;
+}
+function fillStartYearSelect(optYear){
+  const sel=document.getElementById('startYear');if(!sel)return;
+  const {minY,maxY}=getLoanYearBounds();let curNum=optYear!=null?parseInt(String(optYear),10):parseInt(sel.value,10);
+  if(isNaN(curNum))curNum=minY;curNum=Math.max(minY,Math.min(maxY,curNum));sel.innerHTML=yearOptionsInnerHtml(curNum,false,minY,maxY);
+}
+function onLoanTimelineChanged(){fillStartYearSelect();redrawAllPPRows();redrawAllOPRows();redrawAllRPRows();try{savePersistedState();}catch(e){}}
+/** Close each non-last row before the next row's From; clear Till End on non-last. */
+function syncChainedPeriodGaps(list,sy,sm,totM){
+  for(let i=0;i<list.length-1;i++){
+    const p=list[i],nxt=list[i+1];
+    const nAbs=yearMonthToAbsMonth(nxt.fromYear,nxt.fromMonth,sy,sm);
+    const pEndBefore=p.tillEnd?Infinity:yearMonthToAbsMonth(p.toYear,p.toMonth,sy,sm);
+    p.tillEnd=false;
+    if(nAbs>1){
+      if(!p.toYear||!p.toMonth||pEndBefore>=nAbs){
+        const cal=absScheduleIndexToYearMonth(nAbs-1,sy,sm);
+        p.toYear=cal.year;p.toMonth=cal.month;
       }
-    });
-  }
-}
-function updPP(id, k, v) {
-  if (ppEditingId !== id) return;
-  const p = pps.find(x => x.id === id);
-  if (!p) return;
-  p[k] = k === 'month' || k === 'year' || k === 'amount' ? parseFloat(v) || 0 : v;
-}
-function delPP(id) {
-  if (ppEditingId === id) {
-    ppEditingId = null;
-    ppEditSnapshot = null;
-  }
-  pps = pps.filter(x => x.id !== id);
-  document.getElementById('pp' + id)?.remove();
-}
-function beginPPRowEdit(id) {
-  const p = pps.find(x => x.id === id);
-  if (!p) return;
-  if (odEditingId) cancelOPRowEdit(odEditingId);
-  if (ppEditingId && ppEditingId !== id) cancelPPRowEdit(ppEditingId);
-  if (ppEditingId === id) return;
-  ppEditingId = id;
-  ppEditSnapshot = clonePpSnapshot(p);
-  redrawAllPPRows();
-  const wrap = document.getElementById('pp' + id);
-  if (!wrap) return;
-  wrap.classList.add('pp-row--focus');
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  requestAnimationFrame(() => {
-    const el = document.getElementById('ppYear' + id);
-    if (el) {
-      el.focus();
-      try {
-        el.select();
-      } catch (e) { /* */ }
-    }
-  });
-}
-function cancelPPRowEdit(id) {
-  if (ppEditingId !== id) return;
-  const p = pps.find(x => x.id === id);
-  if (p && ppEditSnapshot && ppEditSnapshot.id === id) Object.assign(p, ppEditSnapshot);
-  ppEditingId = null;
-  ppEditSnapshot = null;
-  redrawAllPPRows();
-  document.getElementById('pp' + id)?.classList.remove('pp-row--focus');
-}
-function commitPPRow(id) {
-  const p = pps.find(x => x.id === id);
-  if (!p || ppEditingId !== id) return;
-  const yEl = document.getElementById('ppYear' + id);
-  const mEl = document.getElementById('ppMonth' + id);
-  const aEl = document.getElementById('ppAmount' + id);
-  const tEl = document.getElementById('ppTo' + id);
-  if (yEl) p.year = parseInt(yEl.value, 10) || 0;
-  if (mEl) p.month = parseInt(mEl.value, 10) || 0;
-  if (aEl) p.amount = parseFloat(aEl.value) || 0;
-  if (tEl) p.to = tEl.value === 'std' || tEl.value === 'od' ? tEl.value : 'both';
-  ppEditingId = null;
-  ppEditSnapshot = null;
-  redrawAllPPRows();
-  document.getElementById('pp' + id)?.classList.remove('pp-row--focus');
-  if (document.getElementById('results')?.classList.contains('show')) calculate();
-  else try { savePersistedState(); } catch (e) { /* */ }
-}
-
-// ── OD Periods ─────────────────────────────────────────────────────────────
-function odPeriodIsLast(op) {
-  return ops.length > 0 && ops[ops.length - 1].id === op.id;
-}
-/** Only the last row may use Till End; earlier rows get explicit To dates when needed. */
-function syncODTillEndRules() {
-  if (ops.length === 0) return;
-  const startYear = parseInt(document.getElementById('startYear').value, 10) || 2025;
-  const startMonth = getLoanStartMonth();
-  const tenureMonths = parseInt(document.getElementById('tenure').value, 10) * 12 || 240;
-  ops.forEach((op, i) => {
-    const isLast = i === ops.length - 1;
-    if (!isLast) {
-      const hadTillEnd = op.tillEnd;
-      op.tillEnd = false;
-      if (hadTillEnd || !op.toYear || !op.toMonth) {
-        const next = ops[i + 1];
-        const nextStart = yearMonthToAbsMonth(next.fromYear, next.fromMonth, startYear, startMonth);
-        if (nextStart > 1) {
-          const endAbs = nextStart - 1;
-          const cal = absScheduleIndexToYearMonth(endAbs, startYear, startMonth);
-          op.toYear = cal.year;
-          op.toMonth = cal.month;
-        } else {
-          const cal = absScheduleIndexToYearMonth(tenureMonths, startYear, startMonth);
-          op.toYear = cal.year;
-          op.toMonth = cal.month;
-        }
-      }
-    }
-  });
-}
-function opRowInnerHTML(op, startYear) {
-  const id = op.id;
-  const isLast = odPeriodIsLast(op);
-  const editing = odEditingId === id;
-  const ro = editing ? '' : ' disabled';
-  const fy = op.fromYear || '';
-  const fm = op.fromMonth || '';
-  const ty = op.toYear || '';
-  const tm = op.toMonth || '';
-  const bal = op.balance != null && op.balance !== '' ? op.balance : '';
-  const tillEnd = !!op.tillEnd;
-  const hideToBecauseTillEnd = isLast && tillEnd;
-  const toFieldsHtml = hideToBecauseTillEnd ? '' : `
-    <div class="field"><label>To Year</label><select onchange="updOP(${id},'toYear',this.value)" id="toYear${id}"${ro}>${yearOptionsInnerHtml(ty, true)}</select></div>
-    <div class="field"><label>To Mo.</label><select onchange="updOP(${id},'toMonth',this.value)" id="toMonth${id}"${ro}>${monthSelectOptionsHtml(tm)}</select></div>
-  `;
-  const tillOrSpacer = isLast
-    ? `<div class="op-till-wrap">
-      <input type="checkbox" id="tillEnd${id}" ${tillEnd ? 'checked' : ''}${ro} onchange="toggleTillEnd(${id})">
-      <label for="tillEnd${id}" style="font-size:11px;color:var(--muted);cursor:pointer;margin:0;padding:0;">Till End</label>
-    </div>`
-    : '<div class="op-till-spacer" aria-hidden="true"></div>';
-  const actionsHtml = editing
-    ? `<button type="button" class="apply-op-btn" onclick="commitOPRow(${id})">Apply</button>
-      <button type="button" class="cancel-op-btn" onclick="cancelOPRowEdit(${id})">Cancel</button>`
-    : `<button type="button" class="edit-op-btn" onclick="beginOPRowEdit(${id})">Edit</button>`;
-  return `
-    <div class="field"><label>From Year</label><select onchange="updOP(${id},'fromYear',this.value)" id="fromYear${id}"${ro}>${yearOptionsInnerHtml(fy, true)}</select></div>
-    <div class="field"><label>From Mo.</label><select onchange="updOP(${id},'fromMonth',this.value)" id="fromMonth${id}"${ro}>${monthSelectOptionsHtml(fm)}</select></div>
-    ${toFieldsHtml}
-    ${tillOrSpacer}
-    <div class="field"><label>OD Balance ₹</label><input type="number" placeholder="1500000" value="${bal}" onchange="updOP(${id},'balance',this.value)" id="balance${id}"${ro}></div>
-    <div class="op-actions">
-      ${actionsHtml}
-      <button type="button" class="del-btn" onclick="delOP(${id})" aria-label="Remove period">✕</button>
-    </div>`;
-}
-function redrawAllOPRows() {
-  syncODTillEndRules();
-  const startYear = parseInt(document.getElementById('startYear').value) || 2025;
-  ops.forEach(op => {
-    const div = document.getElementById('op' + op.id);
-    if (div) div.innerHTML = opRowInnerHTML(op, startYear);
-  });
-}
-/** Before schedule: end each prior period the month before the next period's start (when next has a valid from). */
-function normalizeODPeriodsForSubmit(startYear, startMonth) {
-  let changed = false;
-  let closedTillEnd = false;
-  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
-  for (let i = 1; i < ops.length; i++) {
-    const cur = ops[i];
-    const newStart = yearMonthToAbsMonth(cur.fromYear, cur.fromMonth, startYear, sm);
-    if (newStart <= 0) continue;
-    const prev = ops[i - 1];
-    const endAbs = newStart - 1;
-    if (endAbs < 1) continue;
-    const cal = absScheduleIndexToYearMonth(endAbs, startYear, sm);
-    const endYear = cal.year;
-    const endMonth = cal.month;
-    const prevEnd = prev.tillEnd ? Infinity : yearMonthToAbsMonth(prev.toYear, prev.toMonth, startYear, sm);
-    if (prev.tillEnd || !prev.toYear || !prev.toMonth || (prevEnd > 0 && prevEnd >= newStart)) {
-      if (prev.tillEnd) closedTillEnd = true;
-      prev.tillEnd = false;
-      prev.toYear = endYear;
-      prev.toMonth = endMonth;
-      changed = true;
-    }
-  }
-  const message = changed
-    ? (closedTillEnd
-      ? 'Open-ended ("Till End") period(s) were closed the month before the next period starts.'
-      : 'Earlier period(s) now end the month before the next period starts.')
-    : '';
-  return { changed, message };
-}
-function setOpAdjustMsg(visible, text) {
-  const el = document.getElementById('op-adjust-msg');
-  if (!el) return;
-  el.textContent = text || '';
-  el.style.display = visible ? 'block' : 'none';
-}
-function addOP(fromYear='', fromMonth='', toYear='', toMonth='', bal='', tillEnd=false, options = {}) {
-  const { skipAutoEdit = false } = options;
-  const id = uid();
-  ops.push({
-    id,
-    fromYear: fromYear ? parseInt(fromYear, 10) : 0,
-    fromMonth: fromMonth ? parseInt(fromMonth, 10) : 0,
-    toYear: toYear ? parseInt(toYear, 10) : 0,
-    toMonth: toMonth ? parseInt(toMonth, 10) : 0,
-    balance: bal !== '' && bal != null ? parseFloat(bal) : 0,
-    tillEnd: !!tillEnd
-  });
-  if (!skipAutoEdit) {
-    if (ppEditingId) cancelPPRowEdit(ppEditingId);
-    if (odEditingId && odEditingId !== id) cancelOPRowEdit(odEditingId);
-    odEditingId = id;
-    odEditSnapshot = cloneOpSnapshot(ops[ops.length - 1]);
-  }
-  const div = document.createElement('div');
-  div.className = 'op-row';
-  div.id = 'op' + id;
-  document.getElementById('op-list').appendChild(div);
-  redrawAllOPRows();
-  if (!skipAutoEdit) {
-    const wrap = document.getElementById('op' + id);
-    if (wrap) {
-      wrap.classList.add('op-row--focus');
-      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      requestAnimationFrame(() => {
-        const inp = document.getElementById('fromYear' + id);
-        if (inp) {
-          inp.focus();
-          try {
-            inp.select();
-          } catch (e) { /* ignore */ }
-        }
-      });
+    }else if(!p.toYear||!p.toMonth||!isFinite(pEndBefore)||pEndBefore>=totM){
+      const endAbs=Math.max(1,Math.min(totM-1,Math.floor(totM/2)));
+      const cal=absScheduleIndexToYearMonth(endAbs,sy,sm);
+      p.toYear=cal.year;p.toMonth=cal.month;
     }
   }
 }
-function toggleTillEnd(id) {
-  if (odEditingId !== id) return;
-  const p = ops.find(x => x.id === id);
-  if (!p || !odPeriodIsLast(p)) return;
-  const checkbox = document.getElementById('tillEnd' + id);
-  p.tillEnd = checkbox.checked;
-  if (p.tillEnd) ops.forEach(op => { if (op.id !== id) op.tillEnd = false; });
-  redrawAllOPRows();
+function onBaseRateChanged(){/* rates changed; redraw RP rows so placeholders refresh */redrawAllRPRows();}
+function togglePanel(h){h.classList.toggle('open');h.nextElementSibling.classList.toggle('open');}
+
+// ─── Theme ──────────────────────────────────────────────────────────────────
+function applyTheme(mode){const m=mode==='light'?'light':'dark';document.documentElement.setAttribute('data-theme',m);try{localStorage.setItem('hl-theme',m);}catch(e){}const b=document.getElementById('themeBtn');if(b)b.textContent=m==='light'?'☀️':'🌙';refreshChartForTheme();}
+function initTheme(){let t='light';try{if(localStorage.getItem('hl-theme')==='dark')t='dark';}catch(e){}applyTheme(t);}
+function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';applyTheme(cur==='light'?'dark':'light');try{savePersistedState();}catch(e){}}
+function refreshChartForTheme(){if(!schedule||!schedule.length)return;const tab=document.querySelector('.tab.active');if(!tab)return;const tlab=tab.textContent.toLowerCase();const type=tlab.includes('monthly')?'monthly':tlab.includes('cumulative')?'cumulative':tlab.includes('yearly')?'yearly':'balance';renderChart(type);}
+function setPrintEnabled(on){const b=document.getElementById('printBtn');if(b)b.disabled=!on;const e=document.getElementById('exportBtnModal');if(e)e.disabled=!on;}
+let stateModalEscHandler=null;
+function openStateModal(){
+  const m=document.getElementById('state-modal');if(!m)return;
+  const res=document.getElementById('results');const exp=document.getElementById('exportBtnModal');
+  if(exp&&res)exp.disabled=!res.classList.contains('show');
+  m.classList.add('open');m.setAttribute('aria-hidden','false');
+  stateModalEscHandler=function(e){if(e.key==='Escape')closeStateModal();};
+  document.addEventListener('keydown',stateModalEscHandler);
 }
-function updOP(id, k, v) {
-  if (odEditingId !== id) return;
-  const p = ops.find(x => x.id === id);
-  if (!p) return;
-  if (k === 'balance') p[k] = parseFloat(v) || 0;
-  else p[k] = parseInt(v, 10) || 0;
+function closeStateModal(){
+  const m=document.getElementById('state-modal');if(!m)return;
+  m.classList.remove('open');m.setAttribute('aria-hidden','true');
+  if(stateModalEscHandler){document.removeEventListener('keydown',stateModalEscHandler);stateModalEscHandler=null;}
 }
-function cloneOpSnapshot(p) {
-  return {
-    id: p.id,
-    fromYear: p.fromYear,
-    fromMonth: p.fromMonth,
-    toYear: p.toYear,
-    toMonth: p.toMonth,
-    balance: p.balance,
-    tillEnd: !!p.tillEnd
-  };
+function printReport(){const res=document.getElementById('results');if(!res||!res.classList.contains('show'))return;const hadViewAll=monthTableViewAll,prevPage=page;monthTableViewAll=true;page=1;renderTable();window.scrollTo(0,0);let restored=false;const doRestore=()=>{if(restored)return;restored=true;window.removeEventListener('afterprint',doRestore);monthTableViewAll=hadViewAll;page=prevPage;renderTable();};window.addEventListener('afterprint',doRestore);try{window.print();}catch(e){doRestore();}setTimeout(()=>doRestore(),2500);}
+
+// ─── Part Payments ──────────────────────────────────────────────────────────
+function clonePpSnapshot(p){return{id:p.id,year:p.year,month:p.month,amount:p.amount,to:p.to};}
+function ppRowInnerHTML(p){
+  const id=p.id,editing=ppEditingId===id,ro=editing?'':' disabled';
+  const year=p.year||'',month=p.month||'',amt=p.amount!=null&&p.amount!==''&&!isNaN(Number(p.amount))?p.amount:'';
+  const toVal=p.to==='std'||p.to==='od'?p.to:'both';
+  const acts=editing?`<button class="apply-op-btn" onclick="commitPPRow(${id})">Apply</button><button class="cancel-op-btn" onclick="cancelPPRowEdit(${id})">Cancel</button>`:`<button class="edit-op-btn" onclick="beginPPRowEdit(${id})">Edit</button>`;
+  return `<div class="field"><label>Year</label><select onchange="updPP(${id},'year',this.value)"${ro}>${yearOptionsInnerHtml(year,true)}</select></div>
+    <div class="field"><label>Month</label><select onchange="updPP(${id},'month',this.value)"${ro}>${monthSelectOptionsHtml(month)}</select></div>
+    <div class="field"><label>Amount ₹</label><input type="number" placeholder="200000" value="${amt}" onchange="updPP(${id},'amount',this.value)"${ro}></div>
+    <div class="field"><label>Apply To</label><select onchange="updPP(${id},'to',this.value)"${ro}><option value="both" ${toVal==='both'?'selected':''}>Both</option><option value="std" ${toVal==='std'?'selected':''}>Standard only</option><option value="od" ${toVal==='od'?'selected':''}>OD only</option></select></div>
+    <div class="op-actions">${acts}<button class="del-btn" onclick="delPP(${id})" aria-label="Remove">✕</button></div>`;
 }
-function beginOPRowEdit(id) {
-  const p = ops.find(o => o.id === id);
-  if (!p) return;
-  if (ppEditingId) cancelPPRowEdit(ppEditingId);
-  if (odEditingId && odEditingId !== id) cancelOPRowEdit(odEditingId);
-  if (odEditingId === id) return;
-  odEditingId = id;
-  odEditSnapshot = cloneOpSnapshot(p);
-  redrawAllOPRows();
-  const wrap = document.getElementById('op' + id);
-  if (!wrap) return;
-  wrap.classList.add('op-row--focus');
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  requestAnimationFrame(() => {
-    const inp = document.getElementById('fromYear' + id);
-    if (inp) {
-      inp.focus();
-      try {
-        inp.select();
-      } catch (e) { /* ignore */ }
-    }
-  });
+function redrawAllPPRows(){pps.forEach(p=>{const div=document.getElementById('pp'+p.id);if(div)div.innerHTML=ppRowInnerHTML(p);});}
+function addPP(year='',month='',amt='',to='both',opts={}){
+  const{skipAutoEdit=false}=opts,id=uid(),toVal=to==='std'||to==='od'?to:'both';
+  pps.push({id,year:year?parseInt(year,10):0,month:month?parseInt(month,10):0,amount:amt!==''&&amt!=null?parseFloat(amt):0,to:toVal});
+  const p=pps[pps.length-1];
+  if(!skipAutoEdit){if(ppEditingId&&ppEditingId!==id)cancelPPRowEdit(ppEditingId);if(odEditingId)cancelOPRowEdit(odEditingId);if(rpEditingId)cancelRPRowEdit(rpEditingId);ppEditingId=id;ppEditSnapshot=clonePpSnapshot(p);}
+  const div=document.createElement('div');div.className='ev-row';div.id='pp'+id;
+  document.getElementById('pp-list').appendChild(div);redrawAllPPRows();
+  if(!skipAutoEdit){div.classList.add('pp-row--focus');div.scrollIntoView({behavior:'smooth',block:'nearest'});}
 }
-function cancelOPRowEdit(id) {
-  if (odEditingId !== id) return;
-  const p = ops.find(o => o.id === id);
-  if (p && odEditSnapshot && odEditSnapshot.id === id) {
-    Object.assign(p, odEditSnapshot);
+function updPP(id,k,v){if(ppEditingId!==id)return;const p=pps.find(x=>x.id===id);if(!p)return;p[k]=k==='month'||k==='year'||k==='amount'?parseFloat(v)||0:v;}
+function delPP(id){if(ppEditingId===id){ppEditingId=null;ppEditSnapshot=null;}pps=pps.filter(x=>x.id!==id);document.getElementById('pp'+id)?.remove();}
+function beginPPRowEdit(id){const p=pps.find(x=>x.id===id);if(!p)return;if(odEditingId)cancelOPRowEdit(odEditingId);if(rpEditingId)cancelRPRowEdit(rpEditingId);if(ppEditingId&&ppEditingId!==id)cancelPPRowEdit(ppEditingId);if(ppEditingId===id)return;ppEditingId=id;ppEditSnapshot=clonePpSnapshot(p);redrawAllPPRows();}
+function cancelPPRowEdit(id){if(ppEditingId!==id)return;const p=pps.find(x=>x.id===id);if(p&&ppEditSnapshot&&ppEditSnapshot.id===id)Object.assign(p,ppEditSnapshot);ppEditingId=null;ppEditSnapshot=null;redrawAllPPRows();document.getElementById('pp'+id)?.classList.remove('pp-row--focus');}
+function commitPPRow(id){const p=pps.find(x=>x.id===id);if(!p||ppEditingId!==id)return;const div=document.getElementById('pp'+id);const s=sel=>div?.querySelector(sel);const yEl=s('[id^="ppYear"]')||s('select:nth-of-type(1)');const mEl=s('[id^="ppMonth"]')||s('select:nth-of-type(2)');const aEl=s('input[type=number]');const tEl=s('[id^="ppTo"]')||s('select:nth-of-type(3)');if(yEl)p.year=parseInt(yEl.value,10)||0;if(mEl)p.month=parseInt(mEl.value,10)||0;if(aEl)p.amount=parseFloat(aEl.value)||0;if(tEl)p.to=tEl.value==='std'||tEl.value==='od'?tEl.value:'both';ppEditingId=null;ppEditSnapshot=null;redrawAllPPRows();document.getElementById('pp'+id)?.classList.remove('pp-row--focus');if(document.getElementById('results')?.classList.contains('show'))calculate();else try{savePersistedState();}catch(e){}}
+
+// ─── OD Periods ──────────────────────────────────────────────────────────────
+function odPeriodIsLast(op){return ops.length>0&&ops[ops.length-1].id===op.id;}
+function cloneOpSnapshot(p){return{id:p.id,fromYear:p.fromYear,fromMonth:p.fromMonth,toYear:p.toYear,toMonth:p.toMonth,balance:p.balance,tillEnd:!!p.tillEnd};}
+function scheduleTotalMonths(){return Math.max(1,(parseInt(document.getElementById('tenure')?.value,10)||20)*12);}
+/** When appending a row, the old tail may still carry hidden To dates from a past Calculate. Clear only if it was Till End–open (no committed explicit end). */
+function resetFormerTailWhenExtendingChain(list){
+  if(list.length<2)return;
+  const prev=list[list.length-2];
+  if(!prev.tillEnd)return;
+  prev.tillEnd=false;
+  prev.toYear=0;
+  prev.toMonth=0;
+}
+function opRowInnerHTML(op){
+  const id=op.id,isLast=odPeriodIsLast(op),editing=odEditingId===id,ro=editing?'':' disabled';
+  const b=getLoanYearBounds();
+  const fy=op.fromYear>0?op.fromYear:'',fm=op.fromMonth>0?op.fromMonth:'',ty=op.toYear>0?op.toYear:'',tm=op.toMonth>0?op.toMonth:'',bal=op.balance!=null&&op.balance!==''?op.balance:'';
+  const tillEnd=!!op.tillEnd,hideTo=isLast&&tillEnd;
+  const tyMin=Math.max(b.minY,op.fromYear>0?op.fromYear:b.minY);
+  const toHtml=hideTo?'':`<div class="field"><label>To Year</label><select onchange="updOP(${id},'toYear',this.value)"${ro}>${yearOptionsInnerHtml(ty,true,tyMin)}</select></div><div class="field"><label>To Mo.</label><select onchange="updOP(${id},'toMonth',this.value)"${ro}>${monthSelectOptionsHtml(tm)}</select></div>`;
+  const tillHtml=isLast?`<div class="op-till-wrap"><input type="checkbox" id="tillEnd${id}" ${tillEnd?'checked':''}${ro} onchange="toggleOPTillEnd(${id})"><label for="tillEnd${id}" style="font-size:11px;color:var(--muted);cursor:pointer;margin:0;padding:0;">Till End</label></div>`:'<div class="op-till-spacer" aria-hidden="true"></div>';
+  const acts=editing?`<button class="apply-op-btn" onclick="commitOPRow(${id})">Apply</button><button class="cancel-op-btn" onclick="cancelOPRowEdit(${id})">Cancel</button>`:`<button class="edit-op-btn" onclick="beginOPRowEdit(${id})">Edit</button>`;
+  return `<div class="field"><label>From Year</label><select onchange="updOP(${id},'fromYear',this.value)"${ro}>${yearOptionsInnerHtml(fy,true)}</select></div>
+    <div class="field"><label>From Mo.</label><select onchange="updOP(${id},'fromMonth',this.value)"${ro}>${monthSelectOptionsHtml(fm)}</select></div>
+    ${toHtml}${tillHtml}
+    <div class="field"><label>OD Balance ₹</label><input type="number" placeholder="1500000" value="${bal}" onchange="updOP(${id},'balance',this.value)"${ro}></div>
+    <div class="op-actions">${acts}<button class="del-btn" onclick="delOP(${id})" aria-label="Remove">✕</button></div>`;
+}
+function redrawAllOPRows(){ops.forEach(op=>{const div=document.getElementById('op'+op.id);if(div)div.innerHTML=opRowInnerHTML(op);});}
+function normalizeODPeriodsForSubmit(startYear,startMonth){
+  let changed=false,closedTE=false;const sm=startMonth>=1&&startMonth<=12?startMonth:1;
+  for(let i=1;i<ops.length;i++){const cur=ops[i];const ns=yearMonthToAbsMonth(cur.fromYear,cur.fromMonth,startYear,sm);if(ns<=0)continue;const prev=ops[i-1];const endAbs=ns-1;if(endAbs<1)continue;const cal=absScheduleIndexToYearMonth(endAbs,startYear,sm);const prevEnd=prev.tillEnd?Infinity:yearMonthToAbsMonth(prev.toYear,prev.toMonth,startYear,sm);if(prev.tillEnd||!prev.toYear||!prev.toMonth||(prevEnd>0&&prevEnd>=ns)){if(prev.tillEnd)closedTE=true;prev.tillEnd=false;prev.toYear=cal.year;prev.toMonth=cal.month;changed=true;}}
+  return{changed,message:changed?(closedTE?'Open-ended period(s) closed before next period starts.':'Earlier period(s) end the month before next period starts.'):''};
+}
+function setOpAdjustMsg(vis,text){const el=document.getElementById('op-adjust-msg');if(!el)return;el.textContent=text||'';el.style.display=vis?'block':'none';}
+function addOP(fromYear='',fromMonth='',toYear='',toMonth='',bal='',tillEnd=false,opts={}){
+  const{skipAutoEdit=false}=opts,id=uid();
+  ops.push({id,fromYear:saneCalendarYear(fromYear),fromMonth:saneCalendarMonth(fromMonth),toYear:saneCalendarYear(toYear),toMonth:saneCalendarMonth(toMonth),balance:bal!==''&&bal!=null?parseFloat(bal):0,tillEnd:!!tillEnd});
+  if(!skipAutoEdit&&ops.length>=2){const pen=ops[ops.length-2];if(pen.tillEnd){opChainUndoOnCancel={newRowId:id,penSnap:cloneOpSnapshot(pen)};resetFormerTailWhenExtendingChain(ops);}}
+  if(!skipAutoEdit){if(ppEditingId)cancelPPRowEdit(ppEditingId);if(rpEditingId)cancelRPRowEdit(rpEditingId);if(odEditingId&&odEditingId!==id)cancelOPRowEdit(odEditingId);odEditingId=id;odEditSnapshot=cloneOpSnapshot(ops[ops.length-1]);}
+  const div=document.createElement('div');div.className='op-row';div.id='op'+id;
+  document.getElementById('op-list').appendChild(div);redrawAllOPRows();
+  if(!skipAutoEdit){const w=document.getElementById('op'+id);if(w){w.classList.add('op-row--focus');w.scrollIntoView({behavior:'smooth',block:'nearest'});}}
+}
+function toggleOPTillEnd(id){if(odEditingId!==id)return;const p=ops.find(x=>x.id===id);if(!p||!odPeriodIsLast(p))return;const cb=document.getElementById('tillEnd'+id);p.tillEnd=!!cb.checked;redrawAllOPRows();}
+function updOP(id,k,v){if(odEditingId!==id)return;const p=ops.find(x=>x.id===id);if(!p)return;if(k==='balance')p[k]=parseFloat(v)||0;else if(k==='fromYear'||k==='toYear')p[k]=saneCalendarYear(v);else if(k==='fromMonth'||k==='toMonth')p[k]=saneCalendarMonth(v);else p[k]=parseInt(v,10)||0;}
+function beginOPRowEdit(id){const p=ops.find(o=>o.id===id);if(!p)return;if(ppEditingId)cancelPPRowEdit(ppEditingId);if(rpEditingId)cancelRPRowEdit(rpEditingId);if(odEditingId&&odEditingId!==id)cancelOPRowEdit(odEditingId);if(odEditingId===id)return;odEditingId=id;odEditSnapshot=cloneOpSnapshot(p);redrawAllOPRows();const w=document.getElementById('op'+id);if(w){w.classList.add('op-row--focus');w.scrollIntoView({behavior:'smooth',block:'nearest'});}}
+function cancelOPRowEdit(id){if(odEditingId!==id)return;if(opChainUndoOnCancel&&opChainUndoOnCancel.newRowId===id){const pen=ops.find(o=>o.id===opChainUndoOnCancel.penSnap.id);if(pen)Object.assign(pen,opChainUndoOnCancel.penSnap);opChainUndoOnCancel=null;}const p=ops.find(o=>o.id===id);if(p&&odEditSnapshot&&odEditSnapshot.id===id)Object.assign(p,odEditSnapshot);odEditingId=null;odEditSnapshot=null;redrawAllOPRows();document.getElementById('op'+id)?.classList.remove('op-row--focus');}
+function commitOPRow(id){if(opChainUndoOnCancel&&opChainUndoOnCancel.newRowId===id)opChainUndoOnCancel=null;const p=ops.find(o=>o.id===id);const wrap=document.getElementById('op'+id);if(!p||!wrap)return;const selects=wrap.querySelectorAll('select');const blEl=wrap.querySelector('input[type=number]');p.fromYear=saneCalendarYear(selects[0]?.value);p.fromMonth=saneCalendarMonth(selects[1]?.value);if(blEl)p.balance=parseFloat(blEl.value)||0;const hideTo=odPeriodIsLast(p)&&p.tillEnd;if(!hideTo){p.toYear=saneCalendarYear(selects[2]?.value);p.toMonth=saneCalendarMonth(selects[3]?.value);}const tEl=document.getElementById('tillEnd'+id);if(tEl&&odPeriodIsLast(p))p.tillEnd=tEl.checked;else p.tillEnd=false;const sy=saneCalendarYear(document.getElementById('startYear').value)||2025,sm=getLoanStartMonth(),tm=scheduleTotalMonths();syncChainedPeriodGaps(ops,sy,sm,tm);odEditingId=null;odEditSnapshot=null;redrawAllOPRows();document.getElementById('op'+id)?.classList.remove('op-row--focus');calculate();}
+function delOP(id){if(opChainUndoOnCancel&&opChainUndoOnCancel.newRowId===id){const pen=ops.find(o=>o.id===opChainUndoOnCancel.penSnap.id);if(pen)Object.assign(pen,opChainUndoOnCancel.penSnap);opChainUndoOnCancel=null;}if(odEditingId===id){odEditingId=null;odEditSnapshot=null;}ops=ops.filter(x=>x.id!==id);document.getElementById('op'+id)?.remove();redrawAllOPRows();}
+function odParkMeta(m,def,startYear,startMonth,totMonths){
+  let b=def,matched=false;
+  for(const p of ops){const fromM=yearMonthToAbsMonth(p.fromYear,p.fromMonth,startYear,startMonth);const toM=p.tillEnd?totMonths:yearMonthToAbsMonth(p.toYear,p.toMonth,startYear,startMonth);if(fromM>0&&toM>=fromM&&m>=fromM&&m<=toM){b=p.balance;matched=true;}}
+  if(matched)return{amount:b,tag:'override'};
+  if(ops.length===0)return{amount:def,tag:'default'};
+  const ivs=ops.map(p=>{const fromM=yearMonthToAbsMonth(p.fromYear,p.fromMonth,startYear,startMonth);const toM=p.tillEnd?totMonths:yearMonthToAbsMonth(p.toYear,p.toMonth,startYear,startMonth);return{fromM,toM};}).filter(x=>x.fromM>0&&x.toM>=x.fromM).sort((a,b)=>a.fromM-b.fromM||a.toM-b.toM);
+  for(let i=0;i<ivs.length-1;i++){if(m>ivs[i].toM&&m<ivs[i+1].fromM)return{amount:0,tag:'gap'};}
+  return{amount:def,tag:'default'};
+}
+
+// ─── Rate Periods ────────────────────────────────────────────────────────────
+function rpPeriodIsLast(rp){return rps.length>0&&rps[rps.length-1].id===rp.id;}
+function cloneRpSnapshot(p){return{id:p.id,fromYear:p.fromYear,fromMonth:p.fromMonth,toYear:p.toYear,toMonth:p.toMonth,stdRate:p.stdRate,odRate:p.odRate,tillEnd:!!p.tillEnd};}
+function rpRowInnerHTML(rp){
+  const id=rp.id,isLast=rpPeriodIsLast(rp),editing=rpEditingId===id,ro=editing?'':' disabled';
+  const b=getLoanYearBounds();
+  const fy=rp.fromYear>0?rp.fromYear:'',fm=rp.fromMonth>0?rp.fromMonth:'',ty=rp.toYear>0?rp.toYear:'',tm=rp.toMonth>0?rp.toMonth:'';
+  const baseStd=parseFloat(document.getElementById('stdRate')?.value)||8.5;
+  const baseOd=parseFloat(document.getElementById('odRate')?.value)||8.75;
+  const sr=rp.stdRate!=null&&rp.stdRate!==''?rp.stdRate:'';
+  const or=rp.odRate!=null&&rp.odRate!==''?rp.odRate:'';
+  const tillEnd=!!rp.tillEnd,hideTo=isLast&&tillEnd;
+  const tyMin=Math.max(b.minY,rp.fromYear>0?rp.fromYear:b.minY);
+  const toHtml=hideTo?'':`<div class="field"><label>To Year</label><select onchange="updRP(${id},'toYear',this.value)"${ro}>${yearOptionsInnerHtml(ty,true,tyMin)}</select></div><div class="field"><label>To Mo.</label><select onchange="updRP(${id},'toMonth',this.value)"${ro}>${monthSelectOptionsHtml(tm)}</select></div>`;
+  const tillHtml=isLast?`<div class="op-till-wrap"><input type="checkbox" id="rpTillEnd${id}" ${tillEnd?'checked':''}${ro} onchange="toggleRPTillEnd(${id})"><label for="rpTillEnd${id}" style="font-size:11px;color:var(--muted);cursor:pointer;margin:0;padding:0;">Till End</label></div>`:'<div class="op-till-spacer" aria-hidden="true"></div>';
+  const acts=editing?`<button class="apply-op-btn" onclick="commitRPRow(${id})">Apply</button><button class="cancel-op-btn" onclick="cancelRPRowEdit(${id})">Cancel</button>`:`<button class="edit-op-btn" onclick="beginRPRowEdit(${id})">Edit</button>`;
+  return `<div class="field"><label>From Year</label><select onchange="updRP(${id},'fromYear',this.value)"${ro}>${yearOptionsInnerHtml(fy,true)}</select></div>
+    <div class="field"><label>From Mo.</label><select onchange="updRP(${id},'fromMonth',this.value)"${ro}>${monthSelectOptionsHtml(fm)}</select></div>
+    ${toHtml}${tillHtml}
+    <div class="field"><label style="color:var(--std)">Std Rate %</label><input type="number" step="0.05" placeholder="${baseStd}" value="${sr}" onchange="updRP(${id},'stdRate',this.value)"${ro}></div>
+    <div class="field"><label style="color:var(--od)">OD Rate %</label><input type="number" step="0.05" placeholder="${baseOd}" value="${or}" onchange="updRP(${id},'odRate',this.value)"${ro}></div>
+    <div class="op-actions">${acts}<button class="del-btn" onclick="delRP(${id})" aria-label="Remove">✕</button></div>`;
+}
+function redrawAllRPRows(){rps.forEach(rp=>{const div=document.getElementById('rp'+rp.id);if(div)div.innerHTML=rpRowInnerHTML(rp);});}
+function addRP(fromYear='',fromMonth='',toYear='',toMonth='',sr='',or='',tillEnd=false,opts={}){
+  const{skipAutoEdit=false}=opts,id=uid();
+  const baseStd=parseFloat(document.getElementById('stdRate')?.value)||8.5;
+  const baseOd=parseFloat(document.getElementById('odRate')?.value)||8.75;
+  const prev=rps.length>0?rps[rps.length-1]:null;
+  const effStd=sr!==''&&sr!=null?parseFloat(sr):(prev?prev.stdRate:baseStd);
+  const effOd=or!==''&&or!=null?parseFloat(or):(prev?prev.odRate:baseOd);
+  rps.push({id,fromYear:saneCalendarYear(fromYear),fromMonth:saneCalendarMonth(fromMonth),toYear:saneCalendarYear(toYear),toMonth:saneCalendarMonth(toMonth),stdRate:effStd,odRate:effOd,tillEnd:!!tillEnd});
+  if(!skipAutoEdit&&rps.length>=2){const pen=rps[rps.length-2];if(pen.tillEnd){rpChainUndoOnCancel={newRowId:id,penSnap:cloneRpSnapshot(pen)};resetFormerTailWhenExtendingChain(rps);}}
+  if(!skipAutoEdit){if(ppEditingId)cancelPPRowEdit(ppEditingId);if(odEditingId)cancelOPRowEdit(odEditingId);if(rpEditingId&&rpEditingId!==id)cancelRPRowEdit(rpEditingId);rpEditingId=id;rpEditSnapshot=cloneRpSnapshot(rps[rps.length-1]);}
+  const div=document.createElement('div');div.className='rp-row';div.id='rp'+id;
+  document.getElementById('rp-list').appendChild(div);redrawAllRPRows();
+  if(!skipAutoEdit){const w=document.getElementById('rp'+id);if(w){w.classList.add('rp-row--focus');w.scrollIntoView({behavior:'smooth',block:'nearest'});}}
+}
+function toggleRPTillEnd(id){if(rpEditingId!==id)return;const p=rps.find(x=>x.id===id);if(!p||!rpPeriodIsLast(p))return;const cb=document.getElementById('rpTillEnd'+id);p.tillEnd=!!cb.checked;redrawAllRPRows();}
+function updRP(id,k,v){if(rpEditingId!==id)return;const p=rps.find(x=>x.id===id);if(!p)return;if(k==='stdRate'||k==='odRate')p[k]=parseFloat(v)||0;else if(k==='fromYear'||k==='toYear')p[k]=saneCalendarYear(v);else if(k==='fromMonth'||k==='toMonth')p[k]=saneCalendarMonth(v);else p[k]=parseInt(v,10)||0;}
+function beginRPRowEdit(id){const p=rps.find(x=>x.id===id);if(!p)return;if(ppEditingId)cancelPPRowEdit(ppEditingId);if(odEditingId)cancelOPRowEdit(odEditingId);if(rpEditingId&&rpEditingId!==id)cancelRPRowEdit(rpEditingId);if(rpEditingId===id)return;rpEditingId=id;rpEditSnapshot=cloneRpSnapshot(p);redrawAllRPRows();}
+function cancelRPRowEdit(id){if(rpEditingId!==id)return;if(rpChainUndoOnCancel&&rpChainUndoOnCancel.newRowId===id){const pen=rps.find(x=>x.id===rpChainUndoOnCancel.penSnap.id);if(pen)Object.assign(pen,rpChainUndoOnCancel.penSnap);rpChainUndoOnCancel=null;}const p=rps.find(x=>x.id===id);if(p&&rpEditSnapshot&&rpEditSnapshot.id===id)Object.assign(p,rpEditSnapshot);rpEditingId=null;rpEditSnapshot=null;redrawAllRPRows();document.getElementById('rp'+id)?.classList.remove('rp-row--focus');}
+function commitRPRow(id){if(rpChainUndoOnCancel&&rpChainUndoOnCancel.newRowId===id)rpChainUndoOnCancel=null;const p=rps.find(x=>x.id===id);const wrap=document.getElementById('rp'+id);if(!p||!wrap)return;const selects=wrap.querySelectorAll('select');const inputs=wrap.querySelectorAll('input[type=number]');p.fromYear=saneCalendarYear(selects[0]?.value);p.fromMonth=saneCalendarMonth(selects[1]?.value);const hideTo=rpPeriodIsLast(p)&&p.tillEnd;if(!hideTo){p.toYear=saneCalendarYear(selects[2]?.value);p.toMonth=saneCalendarMonth(selects[3]?.value);}p.stdRate=parseFloat(inputs[0]?.value)||parseFloat(document.getElementById('stdRate')?.value)||8.5;p.odRate=parseFloat(inputs[1]?.value)||parseFloat(document.getElementById('odRate')?.value)||8.75;const tEl=document.getElementById('rpTillEnd'+id);if(tEl&&rpPeriodIsLast(p))p.tillEnd=tEl.checked;else p.tillEnd=false;const sy=saneCalendarYear(document.getElementById('startYear').value)||2025,sm=getLoanStartMonth(),tm=scheduleTotalMonths();syncChainedPeriodGaps(rps,sy,sm,tm);rpEditingId=null;rpEditSnapshot=null;redrawAllRPRows();document.getElementById('rp'+id)?.classList.remove('rp-row--focus');calculate();}
+function delRP(id){if(rpChainUndoOnCancel&&rpChainUndoOnCancel.newRowId===id){const pen=rps.find(x=>x.id===rpChainUndoOnCancel.penSnap.id);if(pen)Object.assign(pen,rpChainUndoOnCancel.penSnap);rpChainUndoOnCancel=null;}if(rpEditingId===id){rpEditingId=null;rpEditSnapshot=null;}rps=rps.filter(x=>x.id!==id);document.getElementById('rp'+id)?.remove();redrawAllRPRows();}
+function rateForMonth(m,baseStdR,baseOdR,startYear,startMonth,totMonths){
+  let sr=baseStdR,or=baseOdR,matched=false;
+  for(const p of rps){const fromM=yearMonthToAbsMonth(p.fromYear,p.fromMonth,startYear,startMonth);const toM=p.tillEnd?totMonths:yearMonthToAbsMonth(p.toYear,p.toMonth,startYear,startMonth);if(fromM>0&&toM>=fromM&&m>=fromM&&m<=toM){sr=p.stdRate!=null?p.stdRate:baseStdR;or=p.odRate!=null?p.odRate:baseOdR;matched=true;}}
+  return{stdRate:sr,odRate:or,fromOverride:matched};
+}
+
+// ─── Core amortization ───────────────────────────────────────────────────────
+function computeSchedules(P,baseStdR,baseOdR,months,odDef){
+  const sy=saneCalendarYear(document.getElementById('startYear').value)||2025;
+  const sm=getLoanStartMonth();
+  // Base EMI (month 1 rates, no prepayments)
+  const r1=rateForMonth(1,baseStdR,baseOdR,sy,sm,months);
+  const rS0=r1.stdRate/100/12;
+  const effP0=Math.max(P-odDef,0);
+  const rO0=r1.odRate/100/12;
+  const baseEmiS=rS0>0?(P*rS0*Math.pow(1+rS0,months))/(Math.pow(1+rS0,months)-1):P/months;
+  const baseEmiO=effP0>0&&rO0>0?(effP0*rO0*Math.pow(1+rO0,months))/(effP0*rO0*Math.pow(1+rO0,months)-1):effP0/months;
+  // More robust base EMI calc
+  const calcEmi=(bal,r,rem)=>rem>0&&r>0?(bal*r*Math.pow(1+r,rem))/(Math.pow(1+r,rem)-1):bal>0?bal/Math.max(rem,1):0;
+  let balS=P,balO=P;
+  const rows=[];
+  let prevOdBal=null,prevPpTotal=0,prevStdRate=null,prevOdRate=null;
+  for(let m=1;m<=months;m++){
+    if(balS<=0.5&&balO<=0.5)break;
+    const ppS=pps.filter(p=>{const pm=yearMonthToAbsMonth(p.year,p.month,sy,sm);return pm===m&&(p.to==='both'||p.to==='std');}).reduce((s,p)=>s+p.amount,0);
+    const ppO=pps.filter(p=>{const pm=yearMonthToAbsMonth(p.year,p.month,sy,sm);return pm===m&&(p.to==='both'||p.to==='od');}).reduce((s,p)=>s+p.amount,0);
+    balS=Math.max(balS-ppS,0);balO=Math.max(balO-ppO,0);
+    const odMeta=odParkMeta(m,odDef,sy,sm,months);
+    const odBal=odMeta.amount,odParkTag=odMeta.tag;
+    const rMeta=rateForMonth(m,baseStdR,baseOdR,sy,sm,months);
+    const curStdR=rMeta.stdRate,curOdR=rMeta.odRate;
+    const rS=curStdR/100/12,rO=curOdR/100/12;
+    const effBalO=Math.max(balO-odBal,0);
+    const remM=months-m+1;
+    const ppTot=ppS+ppO,odDelta=prevOdBal!==null?odBal-prevOdBal:0,ppDelta=ppTot-(prevPpTotal||0);
+    const rateChanged=(prevStdRate!==null&&Math.abs(curStdR-prevStdRate)>0.001)||(prevOdRate!==null&&Math.abs(curOdR-prevOdRate)>0.001);
+    let intS=0,prinS=0,emiS=0;
+    if(balS>0){intS=balS*rS;emiS=calcEmi(balS,rS,remM);prinS=Math.min(emiS-intS,balS);if(prinS<0)prinS=0;balS=Math.max(balS-prinS,0);}
+    let intO=0,prinO=0,emiO=0;
+    if(effBalO>0){intO=effBalO*rO;emiO=calcEmi(effBalO,rO,remM);prinO=Math.min(emiO-intO,effBalO);if(prinO<0)prinO=0;balO=Math.max(balO-prinO,0);}else if(balO>0){prinO=Math.min(calcEmi(balO,rO,remM)||baseEmiS*0.5,balO);balO=Math.max(balO-prinO,0);}
+    rows.push({month:m,label:monthStr(m,sy,sm),emiS,intS,prinS,balS,ppS,emiO,intO,prinO,balO,ppO,odBal,effBalO,intDiff:intS-intO,hasPP:ppS>0||ppO>0,odParkTag,odDelta,ppDelta,stdRate:curStdR,odRate:curOdR,rateChanged,rateFromOverride:rMeta.fromOverride});
+    prevOdBal=odBal;prevPpTotal=ppTot;prevStdRate=curStdR;prevOdRate=curOdR;
   }
-  odEditingId = null;
-  odEditSnapshot = null;
-  redrawAllOPRows();
-  document.getElementById('op' + id)?.classList.remove('op-row--focus');
+  return{baseEmiS:calcEmi(P,rS0,months),baseEmiO:calcEmi(effP0,rO0,months),rows};
 }
-/** Read this row’s inputs into <code>ops</code>, exit edit mode, refresh rows, then run Calculate. */
-function commitOPRow(id) {
-  const p = ops.find(o => o.id === id);
-  const wrap = document.getElementById('op' + id);
-  if (!p || !wrap) return;
-  const fy = document.getElementById('fromYear' + id);
-  const fm = document.getElementById('fromMonth' + id);
-  const balEl = document.getElementById('balance' + id);
-  if (fy) p.fromYear = parseInt(fy.value, 10) || 0;
-  if (fm) p.fromMonth = parseInt(fm.value, 10) || 0;
-  if (balEl) p.balance = parseFloat(balEl.value) || 0;
-  const ty = document.getElementById('toYear' + id);
-  const tm = document.getElementById('toMonth' + id);
-  if (ty) p.toYear = parseInt(ty.value, 10) || 0;
-  if (tm) p.toMonth = parseInt(tm.value, 10) || 0;
-  const tillEl = document.getElementById('tillEnd' + id);
-  if (tillEl && odPeriodIsLast(p)) p.tillEnd = tillEl.checked;
-  else p.tillEnd = false;
-  odEditingId = null;
-  odEditSnapshot = null;
-  redrawAllOPRows();
-  document.getElementById('op' + id)?.classList.remove('op-row--focus');
-  calculate();
+
+// ─── Persistence ─────────────────────────────────────────────────────────────
+function collectPersistPayload(){
+  return{v:2,principal:document.getElementById('principal')?.value??'',tenure:document.getElementById('tenure')?.value??'',startYear:document.getElementById('startYear')?.value??'',startMonth:document.getElementById('startMonth')?.value??'1',stdRate:document.getElementById('stdRate')?.value??'',odRate:document.getElementById('odRate')?.value??'',odDef:document.getElementById('odDef')?.value??'',theme:document.documentElement.getAttribute('data-theme')==='light'?'light':'dark',pps:pps.map(({year,month,amount,to})=>({year,month,amount,to})),ops:ops.map(({fromYear,fromMonth,toYear,toMonth,balance,tillEnd})=>({fromYear:saneCalendarYear(fromYear),fromMonth:saneCalendarMonth(fromMonth),toYear:saneCalendarYear(toYear),toMonth:saneCalendarMonth(toMonth),balance,tillEnd:!!tillEnd})),rps:rps.map(({fromYear,fromMonth,toYear,toMonth,stdRate,odRate,tillEnd})=>({fromYear:saneCalendarYear(fromYear),fromMonth:saneCalendarMonth(fromMonth),toYear:saneCalendarYear(toYear),toMonth:saneCalendarMonth(toMonth),stdRate,odRate,tillEnd:!!tillEnd})),view,chartView,srch:document.getElementById('srch')?.value??'',monthPageSize,monthTableViewAll:!!monthTableViewAll};
 }
-function delOP(id) {
-  if (odEditingId === id) {
-    odEditingId = null;
-    odEditSnapshot = null;
+function savePersistedState(){try{localStorage.setItem(LS_KEY,JSON.stringify(collectPersistPayload()));}catch(e){}}
+function clearPersistedState(){try{localStorage.removeItem(LS_KEY);}catch(e){}}
+function ensureDefaultPeriodRows(){
+  if(ops.length===0){
+    const sy=saneCalendarYear(document.getElementById('startYear')?.value)||2025,sm=getLoanStartMonth();
+    const balEl=document.getElementById('odDef');const bal=balEl&&balEl.value!==''&&balEl.value!=null?String(balEl.value):'';
+    addOP(sy,sm,'','',bal,true,{skipAutoEdit:true});
   }
-  ops = ops.filter(x => x.id !== id);
-  document.getElementById('op' + id)?.remove();
-  redrawAllOPRows();
-}
-
-// ── Helper: calendar (year, month) → 1-based schedule index from loan start (startYear, startMonth) ──
-function yearMonthToAbsMonth(year, month, startYear, startMonth) {
-  if (!year || !month) return 0;
-  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
-  return (year * 12 + (month - 1)) - (startYear * 12 + (sm - 1)) + 1;
-}
-/** Schedule index (1 = first EMI) → calendar year & month (1–12). */
-function absScheduleIndexToYearMonth(absIdx, startYear, startMonth) {
-  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
-  const d = new Date(startYear, sm - 1 + (absIdx - 1), 1);
-  return { year: d.getFullYear(), month: d.getMonth() + 1 };
-}
-
-// ── OD balance for month (+ tag for UI): default | override | gap ──────────
-function odParkMeta(m, def, startYear, startMonth, totMonths) {
-  if (!totMonths) totMonths = parseInt(document.getElementById('tenure').value) * 12 || 240;
-  let b = def;
-  let matched = false;
-  for (const p of ops) {
-    const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear, startMonth);
-    const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear, startMonth);
-    if (fromM > 0 && toM >= fromM && m >= fromM && m <= toM) {
-      b = p.balance;
-      matched = true;
-    }
-  }
-  if (matched) return { amount: b, tag: 'override' };
-  if (ops.length === 0) return { amount: def, tag: 'default' };
-  const ivs = ops
-    .map(p => {
-      const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear, startMonth);
-      const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear, startMonth);
-      return { fromM, toM };
-    })
-    .filter(x => x.fromM > 0 && x.toM >= x.fromM)
-    .sort((a, b) => a.fromM - b.fromM || a.toM - b.toM);
-  for (let i = 0; i < ivs.length - 1; i++) {
-    const hi = ivs[i].toM;
-    const lo = ivs[i + 1].fromM;
-    if (m > hi && m < lo) return { amount: 0, tag: 'gap' };
-  }
-  return { amount: def, tag: 'default' };
-}
-function odBalForMonth(m, def, startYear, startMonth, totMonths) {
-  return odParkMeta(m, def, startYear, startMonth, totMonths).amount;
-}
-
-// ── Core amortization ──────────────────────────────────────────────────────
-function computeSchedules(P, sR, oR, months, odDef) {
-  const rS = sR/100/12, rO = oR/100/12;
-  const startYear = parseInt(document.getElementById('startYear').value)||2025;
-  const startMonth = getLoanStartMonth();
-
-  // Base EMIs (no prepayments)
-  const baseEmiS = (P*rS*Math.pow(1+rS,months))/(Math.pow(1+rS,months)-1);
-  const effP0 = Math.max(P-odDef,0);
-  const baseEmiO = effP0>0 ? (effP0*rO*Math.pow(1+rO,months))/(Math.pow(1+rO,months)-1) : 0;
-
-  let balS = P, balO = P;
-  const rows = [];
-  let prevOdBal = null;
-  let prevPpTotal = 0;
-
-  for (let m=1; m<=months; m++) {
-    if (balS<=0.5 && balO<=0.5) break;
-
-    // Prepayments before EMI - convert year/month to absolute month
-    const ppS = pps.filter(p=>{
-      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear, startMonth);
-      return pMonth===m && (p.to==='both'||p.to==='std');
-    }).reduce((s,p)=>s+p.amount,0);
-    const ppO = pps.filter(p=>{
-      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear, startMonth);
-      return pMonth===m && (p.to==='both'||p.to==='od');
-    }).reduce((s,p)=>s+p.amount,0);
-    balS = Math.max(balS-ppS, 0);
-    balO = Math.max(balO-ppO, 0);
-
-    const odMeta = odParkMeta(m, odDef, startYear, startMonth, months);
-    const odBal = odMeta.amount;
-    const odParkTag = odMeta.tag;
-    const ppTot = ppS + ppO;
-    const odDelta = prevOdBal !== null ? odBal - prevOdBal : 0;
-    const ppDelta = ppTot - prevPpTotal;
-    const effBalO = Math.max(balO-odBal, 0);
-    const remM = months-m+1;
-
-    // Standard
-    let intS=0, prinS=0, emiS=0;
-    if (balS>0) {
-      intS = balS*rS;
-      // Dynamic EMI (recalculate after prepayments to keep tenure)
-      emiS = remM>0 ? (balS*rS*Math.pow(1+rS,remM))/(Math.pow(1+rS,remM)-1) : balS+intS;
-      prinS = Math.min(emiS-intS, balS);
-      balS = Math.max(balS-prinS, 0);
-    }
-
-    // OD
-    let intO=0, prinO=0, emiO=0;
-    if (effBalO>0) {
-      intO = effBalO*rO;
-      emiO = remM>0 ? (effBalO*rO*Math.pow(1+rO,remM))/(Math.pow(1+rO,remM)-1) : effBalO+intO;
-      prinO = Math.min(emiO-intO, effBalO);
-      balO = Math.max(balO-prinO, 0);
-    } else if (balO > 0) {
-      // OD balance covers everything — still reduce principal
-      prinO = Math.min(baseEmiO||baseEmiS*0.5, balO);
-      balO = Math.max(balO-prinO, 0);
-    }
-
-    rows.push({
-      month:m, label:monthStr(m, startYear, startMonth),
-      emiS, intS, prinS, balS, ppS,
-      emiO, intO, prinO, balO, ppO, odBal, effBalO,
-      intDiff: intS-intO,
-      hasPP: ppS>0||ppO>0,
-      odParkTag,
-      odDelta,
-      ppDelta,
-    });
-    prevOdBal = odBal;
-    prevPpTotal = ppTot;
-  }
-
-  return { baseEmiS, baseEmiO, rows };
-}
-
-// ── localStorage workspace (save on successful Calculate) ────────────────
-function collectPersistPayload() {
-  return {
-    v: 1,
-    principal: document.getElementById('principal')?.value ?? '',
-    tenure: document.getElementById('tenure')?.value ?? '',
-    startYear: document.getElementById('startYear')?.value ?? '',
-    startMonth: document.getElementById('startMonth')?.value ?? '',
-    stdRate: document.getElementById('stdRate')?.value ?? '',
-    odRate: document.getElementById('odRate')?.value ?? '',
-    odDef: document.getElementById('odDef')?.value ?? '',
-    theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
-    pps: pps.map(({ year, month, amount, to }) => ({ year, month, amount, to })),
-    ops: ops.map(({ fromYear, fromMonth, toYear, toMonth, balance, tillEnd }) => ({
-      fromYear, fromMonth, toYear, toMonth, balance, tillEnd: !!tillEnd
-    })),
-    view,
-    chartView,
-    srch: document.getElementById('srch')?.value ?? '',
-    monthPageSize,
-    monthTableViewAll: !!monthTableViewAll
-  };
-}
-function savePersistedState() {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(collectPersistPayload()));
-  } catch (e) { /* quota / private mode */ }
-}
-function clearPersistedState() {
-  try {
-    localStorage.removeItem(LS_KEY);
-  } catch (e) { /* */ }
-}
-function loadPersistedState() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return false;
-    const s = JSON.parse(raw);
-    if (s.v !== 1) return false;
-    const setv = (id, v) => {
-      const el = document.getElementById(id);
-      if (el && v != null && v !== '') el.value = String(v);
-    };
-    setv('principal', s.principal);
-    setv('tenure', s.tenure);
-    setv('startYear', s.startYear);
-    setv('startMonth', s.startMonth != null && s.startMonth !== '' ? s.startMonth : '1');
-    setv('stdRate', s.stdRate);
-    setv('odRate', s.odRate);
-    setv('odDef', s.odDef);
-    fillStartYearSelect();
-    const sr = document.getElementById('srch');
-    if (sr && typeof s.srch === 'string') sr.value = s.srch;
-    if (s.view === 'both' || s.view === 'std' || s.view === 'od' || s.view === 'diff') view = s.view;
-    if (s.chartView === 'both' || s.chartView === 'std' || s.chartView === 'od') chartView = s.chartView;
-    monthPageSize = normalizeMonthPageSize(s.monthPageSize);
-    monthTableViewAll = !!s.monthTableViewAll;
-    odEditingId = null;
-    odEditSnapshot = null;
-    ppEditingId = null;
-    ppEditSnapshot = null;
-    document.getElementById('pp-list').innerHTML = '';
-    pps = [];
-    (Array.isArray(s.pps) ? s.pps : []).forEach(p =>
-      addPP(p.year, p.month, p.amount, p.to || 'both', { skipAutoEdit: true })
-    );
-    document.getElementById('op-list').innerHTML = '';
-    ops = [];
-    (Array.isArray(s.ops) ? s.ops : []).forEach(o =>
-      addOP(
-        o.fromYear,
-        o.fromMonth,
-        o.toYear,
-        o.toMonth,
-        o.balance != null && o.balance !== '' ? o.balance : '',
-        !!o.tillEnd,
-        { skipAutoEdit: true }
-      )
-    );
-    applyTheme(s.theme === 'light' ? 'light' : 'dark');
-    return true;
-  } catch (e) {
-    return false;
+  if(rps.length===0){
+    const sy=saneCalendarYear(document.getElementById('startYear')?.value)||2025,sm=getLoanStartMonth();
+    addRP(sy,sm,'','','','',true,{skipAutoEdit:true});
   }
 }
-function resetAll() {
-  clearPersistedState();
-  Object.entries(INPUT_DEFAULTS).forEach(([id, v]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
-  });
+function applyStatePayload(s){
+  const setv=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=String(v);};
+  setv('principal',s.principal);setv('tenure',s.tenure);setv('startYear',s.startYear);setv('startMonth',s.startMonth!=null&&s.startMonth!==''?s.startMonth:'1');setv('stdRate',s.stdRate);setv('odRate',s.odRate);setv('odDef',s.odDef);
   fillStartYearSelect();
-  document.getElementById('pp-list').innerHTML = '';
-  pps = [];
-  ppEditingId = null;
-  ppEditSnapshot = null;
-  document.getElementById('op-list').innerHTML = '';
-  ops = [];
-  odEditingId = null;
-  odEditSnapshot = null;
-  schedule = [];
-  filtered = [];
-  const sr = document.getElementById('srch');
-  if (sr) sr.value = '';
-  setOpAdjustMsg(false, '');
-  document.getElementById('results')?.classList.remove('show');
-  setPrintEnabled(false);
-  if (ci) {
-    try {
-      ci.destroy();
-    } catch (e) { /* */ }
-    ci = null;
-  }
-  view = 'both';
-  chartView = 'both';
-  monthPageSize = 24;
-  monthTableViewAll = false;
-  page = 1;
-  try {
-    localStorage.removeItem('hl-theme');
-  } catch (e) { /* */ }
-  applyTheme('light');
+  const sr=document.getElementById('srch');if(sr&&typeof s.srch==='string')sr.value=s.srch;
+  if(s.view==='both'||s.view==='std'||s.view==='od'||s.view==='diff'||s.view==='rates')view=s.view;
+  if(s.chartView==='both'||s.chartView==='std'||s.chartView==='od')chartView=s.chartView;
+  monthPageSize=MONTH_PAGE_SIZES.includes(parseInt(s.monthPageSize,10))?parseInt(s.monthPageSize,10):24;
+  monthTableViewAll=!!s.monthTableViewAll;
+  odEditingId=null;odEditSnapshot=null;ppEditingId=null;ppEditSnapshot=null;rpEditingId=null;rpEditSnapshot=null;
+  document.getElementById('pp-list').innerHTML='';pps=[];
+  (Array.isArray(s.pps)?s.pps:[]).forEach(p=>addPP(p.year,p.month,p.amount,p.to||'both',{skipAutoEdit:true}));
+  document.getElementById('op-list').innerHTML='';ops=[];
+  (Array.isArray(s.ops)?s.ops:[]).forEach(o=>addOP(o.fromYear,o.fromMonth,o.toYear,o.toMonth,o.balance!=null&&o.balance!==''?o.balance:'',!!o.tillEnd,{skipAutoEdit:true}));
+  document.getElementById('rp-list').innerHTML='';rps=[];
+  (Array.isArray(s.rps)?s.rps:[]).forEach(r=>addRP(r.fromYear,r.fromMonth,r.toYear,r.toMonth,r.stdRate!=null?r.stdRate:'',r.odRate!=null?r.odRate:'',!!r.tillEnd,{skipAutoEdit:true}));
+  applyTheme(s.theme==='light'?'light':'dark');
+  ensureDefaultPeriodRows();
+  syncViewToggleUI();
+}
+function loadPersistedState(){try{const raw=localStorage.getItem(LS_KEY);if(!raw)return false;const s=JSON.parse(raw);if(s.v!==1&&s.v!==2)return false;applyStatePayload(s);return true;}catch(e){return false;}}
+function resetAll(){
+  clearPersistedState();
+  Object.entries(INPUT_DEFAULTS).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v;});
+  fillStartYearSelect();
+  document.getElementById('pp-list').innerHTML='';pps=[];ppEditingId=null;ppEditSnapshot=null;
+  document.getElementById('op-list').innerHTML='';ops=[];odEditingId=null;odEditSnapshot=null;
+  document.getElementById('rp-list').innerHTML='';rps=[];rpEditingId=null;rpEditSnapshot=null;
+  schedule=[];filtered=[];const sr=document.getElementById('srch');if(sr)sr.value='';
+  setOpAdjustMsg(false,'');document.getElementById('results')?.classList.remove('show');setPrintEnabled(false);
+  if(ci){try{ci.destroy();}catch(e){}ci=null;}
+  view='both';chartView='both';monthPageSize=24;monthTableViewAll=false;page=1;
+  try{localStorage.removeItem('hl-theme');}catch(e){}applyTheme('light');
+  ensureDefaultPeriodRows();
+  syncViewToggleUI();
 }
 
-// ── Calculate ──────────────────────────────────────────────────────────────
-function calculate() {
-  const P   = parseFloat(document.getElementById('principal').value)||0;
-  const T   = parseInt(document.getElementById('tenure').value)||0;
-  const sR  = parseFloat(document.getElementById('stdRate').value)||0;
-  const oR  = parseFloat(document.getElementById('odRate').value)||0;
-  const odD = parseFloat(document.getElementById('odDef').value)||0;
-  const startYear = parseInt(document.getElementById('startYear').value)||2025;
-  const startMonth = getLoanStartMonth();
-  if (!P||!T||!sR||!oR) { alert('Fill in all required fields'); return; }
+// ─── Export / Import ─────────────────────────────────────────────────────────
+function exportStateFile(){
+  const payload=collectPersistPayload();
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const timeStr=`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+  const filename=`loan-scenario-${dateStr}-${timeStr}.json`;
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function importStateFile(evt){
+  const file=evt.target.files?.[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const s=JSON.parse(e.target.result);
+      if(s.v!==1&&s.v!==2)throw new Error('Unknown state version');
+      applyStatePayload(s);
+      savePersistedState();
+      requestAnimationFrame(()=>{try{calculate();}catch(err){alert('State loaded but calculation failed: '+err.message);}});
+      closeStateModal();
+    }catch(err){alert('Could not load state file: '+err.message);}
+    evt.target.value='';
+  };
+  reader.readAsText(file);
+}
 
-  // Pre-populate OD tenure if none exist
-  if(ops.length === 0 && odD > 0) {
-    addOP(startYear, startMonth, '', '', odD, true, { skipAutoEdit: true });
-  }
-
-  const norm = normalizeODPeriodsForSubmit(startYear, startMonth);
-  if (norm.changed) {
-    redrawAllOPRows();
-    setOpAdjustMsg(true, norm.message);
-  } else {
-    setOpAdjustMsg(false, '');
-  }
-
-  const { baseEmiS, baseEmiO, rows } = computeSchedules(P, sR, oR, T*12, odD);
-  schedule = rows;
-
-  const totIS = rows.reduce((s,r)=>s+r.intS,0);
-  const totIO = rows.reduce((s,r)=>s+r.intO,0);
-  const totPPS = rows.reduce((s,r)=>s+r.ppS,0);
-  const totPPO = rows.reduce((s,r)=>s+r.ppO,0);
-
-  document.getElementById('s-emi').textContent = fmtR(baseEmiS);
-  document.getElementById('s-total').textContent = `Total: ${fmt(totIS+P)} · Prepays: ${fmt(totPPS)}`;
-  document.getElementById('o-emi').textContent = fmtR(baseEmiO);
-  document.getElementById('o-total').textContent = `Effective total: ${fmt(totIO+P)} · Prepays: ${fmt(totPPO)}`;
-  const dE = baseEmiS-baseEmiO;
-  document.getElementById('diff-emi').textContent = (dE>=0?'':'-')+fmtR(Math.abs(dE))+'/mo';
-  document.getElementById('diff-sub').textContent = dE>=0 ? 'OD EMI is lower each month' : 'OD EMI higher (increase OD balance)';
-  document.getElementById('s-int').textContent = fmt(totIS);
-  document.getElementById('s-tenure').textContent = `Actual: ${rows.length} months`;
-  document.getElementById('o-int').textContent = fmt(totIO);
-  document.getElementById('o-tenure').textContent = `Includes OD daily interest reduction`;
-  const sv = totIS-totIO;
-  document.getElementById('saved').textContent = (sv>=0?'':'-')+fmt(Math.abs(sv));
-
-  buildCD(rows, T);
-  renderChart('monthly');
+// ─── Calculate ───────────────────────────────────────────────────────────────
+function calculate(){
+  const P=parseFloat(document.getElementById('principal').value)||0;
+  const T=parseInt(document.getElementById('tenure').value)||0;
+  const sR=parseFloat(document.getElementById('stdRate').value)||0;
+  const oR=parseFloat(document.getElementById('odRate').value)||0;
+  const odD=parseFloat(document.getElementById('odDef').value)||0;
+  const sy=saneCalendarYear(document.getElementById('startYear').value)||2025;
+  const sm=getLoanStartMonth();
+  if(!P||!T||!sR||!oR){alert('Fill in all required fields');return;}
+  const tm=T*12;
+  syncChainedPeriodGaps(ops,sy,sm,tm);
+  syncChainedPeriodGaps(rps,sy,sm,tm);
+  const norm=normalizeODPeriodsForSubmit(sy,sm);
+  redrawAllOPRows();redrawAllRPRows();
+  if(norm.changed){setOpAdjustMsg(true,norm.message);}else{setOpAdjustMsg(false,'');}
+  const{baseEmiS,baseEmiO,rows}=computeSchedules(P,sR,oR,T*12,odD);
+  schedule=rows;
+  const totIS=rows.reduce((s,r)=>s+r.intS,0),totIO=rows.reduce((s,r)=>s+r.intO,0);
+  const totPPS=rows.reduce((s,r)=>s+r.ppS,0),totPPO=rows.reduce((s,r)=>s+r.ppO,0);
+  document.getElementById('s-emi').textContent=fmtR(baseEmiS);
+  document.getElementById('s-total').textContent=`Total: ${fmt(totIS+P)} · Prepays: ${fmt(totPPS)}`;
+  document.getElementById('o-emi').textContent=fmtR(baseEmiO);
+  document.getElementById('o-total').textContent=`Effective total: ${fmt(totIO+P)} · Prepays: ${fmt(totPPO)}`;
+  const dE=baseEmiS-baseEmiO;
+  document.getElementById('diff-emi').textContent=(dE>=0?'':'-')+fmtR(Math.abs(dE))+'/mo';
+  document.getElementById('diff-sub').textContent=dE>=0?'OD EMI is lower each month':'OD EMI higher (increase OD balance)';
+  document.getElementById('s-int').textContent=fmt(totIS);
+  document.getElementById('s-tenure').textContent=`Actual: ${rows.length} months`;
+  document.getElementById('o-int').textContent=fmt(totIO);
+  document.getElementById('o-tenure').textContent=`Includes OD daily interest reduction`;
+  const sv=totIS-totIO;
+  document.getElementById('saved').textContent=(sv>=0?'':'-')+fmt(Math.abs(sv));
+  buildCD(rows,T);renderChart('monthly');
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
-
-  buildMonthTable();
-  buildYearTable(rows, T);
-
-  document.getElementById('results').classList.add('show');
-  setPrintEnabled(true);
-  savePersistedState();
+  syncViewToggleUI();
+  buildMonthTable();buildYearTable(rows,T);
+  document.getElementById('results').classList.add('show');setPrintEnabled(true);savePersistedState();
   setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth'}),100);
 }
 
-// ── Chart ──────────────────────────────────────────────────────────────────
-function buildCD(rows, tenure) {
-  const step = Math.max(1,Math.floor(rows.length/100));
+// ─── Chart ───────────────────────────────────────────────────────────────────
+function buildCD(rows,tenure){
+  const step=Math.max(1,Math.floor(rows.length/100));
   const L=[],sP=[],sI=[],oP=[],oI=[],sB=[],oB=[],csI=[],coI=[];
   let cumS=0,cumO=0;
-  rows.forEach((r,i)=>{
-    cumS+=r.intS; cumO+=r.intO;
-    if(i%step===0||i===rows.length-1){
-      L.push(r.label);
-      sP.push(Math.round(r.prinS)); sI.push(Math.round(r.intS));
-      oP.push(Math.round(r.prinO)); oI.push(Math.round(r.intO));
-      sB.push(Math.round(r.balS));  oB.push(Math.round(r.balO));
-      csI.push(Math.round(cumS));   coI.push(Math.round(cumO));
-    }
-  });
-  
-  // Yearly data
+  rows.forEach((r,i)=>{cumS+=r.intS;cumO+=r.intO;if(i%step===0||i===rows.length-1){L.push(r.label);sP.push(Math.round(r.prinS));sI.push(Math.round(r.intS));oP.push(Math.round(r.prinO));oI.push(Math.round(r.intO));sB.push(Math.round(r.balS));oB.push(Math.round(r.balO));csI.push(Math.round(cumS));coI.push(Math.round(cumO));}});
   const yL=[],ySP=[],ySI=[],yOP=[],yOI=[];
-  for(let y=1;y<=tenure;y++){
-    const sl=rows.filter(r=>r.month>=(y-1)*12+1&&r.month<=y*12);
-    if(!sl.length)break;
-    yL.push('Year '+y);
-    ySP.push(Math.round(sl.reduce((s,r)=>s+r.prinS,0)));
-    ySI.push(Math.round(sl.reduce((s,r)=>s+r.intS,0)));
-    yOP.push(Math.round(sl.reduce((s,r)=>s+r.prinO,0)));
-    yOI.push(Math.round(sl.reduce((s,r)=>s+r.intO,0)));
-  }
-  
+  for(let y=1;y<=tenure;y++){const sl=rows.filter(r=>r.month>=(y-1)*12+1&&r.month<=y*12);if(!sl.length)break;yL.push('Year '+y);ySP.push(Math.round(sl.reduce((s,r)=>s+r.prinS,0)));ySI.push(Math.round(sl.reduce((s,r)=>s+r.intS,0)));yOP.push(Math.round(sl.reduce((s,r)=>s+r.prinO,0)));yOI.push(Math.round(sl.reduce((s,r)=>s+r.intO,0)));}
   cd={L,sP,sI,oP,oI,sB,oB,csI,coI,yL,ySP,ySI,yOP,yOI};
 }
-
-function setChartView(view,btn){
-  document.querySelectorAll('#cvBoth, #cvStd, #cvOD').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  chartView=view;
-  const activeTab = document.querySelector('.tab.active');
-  if(activeTab) {
-    const type = activeTab.textContent.toLowerCase().includes('monthly')?'monthly':
-                  activeTab.textContent.toLowerCase().includes('cumulative')?'cumulative':
-                  activeTab.textContent.toLowerCase().includes('yearly')?'yearly':'balance';
-    renderChart(type);
-  }
-}
-
-function switchChart(type,btn){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderChart(type);
-}
-
-function renderChart(type) {
+function setChartView(v,btn){chartView=v;syncViewToggleUI();const at=document.querySelector('.tab.active');if(at){const tl=at.textContent.toLowerCase();renderChart(tl.includes('monthly')?'monthly':tl.includes('cumulative')?'cumulative':tl.includes('yearly')?'yearly':'balance');}}
+function switchChart(type,btn){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderChart(type);}
+function getChartTooltipStyle(){const cs=getComputedStyle(document.documentElement);return{gc:(cs.getPropertyValue('--chart-grid')||'rgba(255,255,255,0.06)').trim(),tc:(cs.getPropertyValue('--chart-tick')||'#64748b').trim(),bg:(cs.getPropertyValue('--chart-tooltip-bg')||'#1a1d26').trim(),br:(cs.getPropertyValue('--chart-tooltip-border')||'#252836').trim(),ti:(cs.getPropertyValue('--chart-tooltip-title')||'#e8eaf0').trim(),bo:(cs.getPropertyValue('--chart-tooltip-body')||'#9ca3af').trim()};}
+function renderChart(type){
   if(ci){ci.destroy();ci=null;}
   const ctx=document.getElementById('chart').getContext('2d');
-  const cs = getComputedStyle(document.documentElement);
-  const gc = (cs.getPropertyValue('--chart-grid') || 'rgba(255,255,255,0.06)').trim();
-  const tc = (cs.getPropertyValue('--chart-tick') || '#64748b').trim();
-  const ttBg = (cs.getPropertyValue('--chart-tooltip-bg') || '#1a1d26').trim();
-  const ttBr = (cs.getPropertyValue('--chart-tooltip-border') || '#252836').trim();
-  const ttTi = (cs.getPropertyValue('--chart-tooltip-title') || '#e8eaf0').trim();
-  const ttBo = (cs.getPropertyValue('--chart-tooltip-body') || '#9ca3af').trim();
+  const{gc,tc,bg,br,ti,bo}=getChartTooltipStyle();
   let ds,leg,ct='bar';
-
-  if(type==='monthly'){
-    if(chartView==='both') {
-      ds=[
-        {label:'Std Principal',data:cd.sP,backgroundColor:'rgba(249,115,22,.9)',stack:'s',borderRadius:0},
-        {label:'Std Interest', data:cd.sI,backgroundColor:'rgba(124,45,18,.85)',stack:'s',borderRadius:0},
-        {label:'OD Principal', data:cd.oP,backgroundColor:'rgba(6,182,212,.9)', stack:'o',borderRadius:0},
-        {label:'OD Interest',  data:cd.oI,backgroundColor:'rgba(22,78,99,.85)', stack:'o',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div>
-           <div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>
-           <div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div>
-           <div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;
-    } else if(chartView==='std') {
-      ds=[
-        {label:'Std Principal',data:cd.sP,backgroundColor:'rgba(249,115,22,.9)',borderRadius:0},
-        {label:'Std Interest', data:cd.sI,backgroundColor:'rgba(124,45,18,.85)',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div>
-           <div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>`;
-    } else {
-      ds=[
-        {label:'OD Principal', data:cd.oP,backgroundColor:'rgba(6,182,212,.9)',borderRadius:0},
-        {label:'OD Interest',  data:cd.oI,backgroundColor:'rgba(22,78,99,.85)',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div>
-           <div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;
-    }
-  } else if(type==='cumulative'){
-    ct='line';
-    if(chartView==='both') {
-      ds=[
-        {label:'Standard',data:cd.csI,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
-        {label:'OD Loan', data:cd.coI,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.07)', fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard cum. interest</div>
-           <div class="li"><div class="ls" style="background:#06b6d4"></div>OD cum. interest</div>`;
-    } else if(chartView==='std') {
-      ds=[
-        {label:'Standard',data:cd.csI,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard cumulative interest</div>`;
-    } else {
-      ds=[
-        {label:'OD Loan', data:cd.coI,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.07)', fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD cumulative interest</div>`;
-    }
-  } else if(type==='yearly'){
-    if(chartView==='both') {
-      ds=[
-        {label:'Std Principal',data:cd.ySP,backgroundColor:'rgba(249,115,22,.9)',stack:'s',borderRadius:0},
-        {label:'Std Interest', data:cd.ySI,backgroundColor:'rgba(124,45,18,.85)',stack:'s',borderRadius:0},
-        {label:'OD Principal', data:cd.yOP,backgroundColor:'rgba(6,182,212,.9)', stack:'o',borderRadius:0},
-        {label:'OD Interest',  data:cd.yOI,backgroundColor:'rgba(22,78,99,.85)', stack:'o',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div>
-           <div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>
-           <div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div>
-           <div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;
-    } else if(chartView==='std') {
-      ds=[
-        {label:'Std Principal',data:cd.ySP,backgroundColor:'rgba(249,115,22,.9)',borderRadius:0},
-        {label:'Std Interest', data:cd.ySI,backgroundColor:'rgba(124,45,18,.85)',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div>
-           <div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>`;
-    } else {
-      ds=[
-        {label:'OD Principal', data:cd.yOP,backgroundColor:'rgba(6,182,212,.9)',borderRadius:0},
-        {label:'OD Interest',  data:cd.yOI,backgroundColor:'rgba(22,78,99,.85)',borderRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div>
-           <div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;
-    }
-    const labels = type==='yearly'?cd.yL:cd.L;
+  const mkTip=()=>({backgroundColor:bg,borderColor:br,borderWidth:1,titleColor:ti,bodyColor:bo,titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11},callbacks:{label:c=>` ${c.dataset.label}: ₹${Math.round(c.parsed.y).toLocaleString('en-IN')}`}});
+  if(type==='yearly'){
+    const labels=cd.yL;
+    if(chartView==='both'){ds=[{label:'Std Principal',data:cd.ySP,backgroundColor:'rgba(249,115,22,.9)',stack:'s',borderRadius:0},{label:'Std Interest',data:cd.ySI,backgroundColor:'rgba(124,45,18,.85)',stack:'s',borderRadius:0},{label:'OD Principal',data:cd.yOP,backgroundColor:'rgba(6,182,212,.9)',stack:'o',borderRadius:0},{label:'OD Interest',data:cd.yOI,backgroundColor:'rgba(22,78,99,.85)',stack:'o',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div><div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div><div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div><div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;}
+    else if(chartView==='std'){ds=[{label:'Std Principal',data:cd.ySP,backgroundColor:'rgba(249,115,22,.9)',borderRadius:0},{label:'Std Interest',data:cd.ySI,backgroundColor:'rgba(124,45,18,.85)',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div><div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>`;}
+    else{ds=[{label:'OD Principal',data:cd.yOP,backgroundColor:'rgba(6,182,212,.9)',borderRadius:0},{label:'OD Interest',data:cd.yOI,backgroundColor:'rgba(22,78,99,.85)',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div><div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;}
     document.getElementById('cleg').innerHTML=leg;
-    ci=new Chart(ctx,{
-      type:'bar',data:{labels,datasets:ds},
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:{duration:300},
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:false},
-          tooltip:{backgroundColor:ttBg,borderColor:ttBr,borderWidth:1,
-            titleColor:ttTi,bodyColor:ttBo,
-            titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11},
-            callbacks:{label:c=>` ${c.dataset.label}: ₹${Math.round(c.parsed.y).toLocaleString('en-IN')}`}
-          }
-        },
-        scales:{
-          x:{stacked:true,grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9}}},
-          y:{stacked:true,grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},
-            callback:v=>v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':v>=1e3?'₹'+(v/1e3).toFixed(0)+'K':'₹'+v
-          }}
-        }
-      }
-    });
+    ci=new Chart(ctx,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:mkTip()},scales:{x:{stacked:true,grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9}}},y:{stacked:true,grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},callback:v=>v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':v>=1e3?'₹'+(v/1e3).toFixed(0)+'K':'₹'+v}}}}});
     return;
-  } else {
+  }
+  if(type==='monthly'){
+    if(chartView==='both'){ds=[{label:'Std Principal',data:cd.sP,backgroundColor:'rgba(249,115,22,.9)',stack:'s',borderRadius:0},{label:'Std Interest',data:cd.sI,backgroundColor:'rgba(124,45,18,.85)',stack:'s',borderRadius:0},{label:'OD Principal',data:cd.oP,backgroundColor:'rgba(6,182,212,.9)',stack:'o',borderRadius:0},{label:'OD Interest',data:cd.oI,backgroundColor:'rgba(22,78,99,.85)',stack:'o',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div><div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div><div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div><div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;}
+    else if(chartView==='std'){ds=[{label:'Std Principal',data:cd.sP,backgroundColor:'rgba(249,115,22,.9)',borderRadius:0},{label:'Std Interest',data:cd.sI,backgroundColor:'rgba(124,45,18,.85)',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Std Principal</div><div class="li"><div class="ls" style="background:#7c2d12"></div>Std Interest</div>`;}
+    else{ds=[{label:'OD Principal',data:cd.oP,backgroundColor:'rgba(6,182,212,.9)',borderRadius:0},{label:'OD Interest',data:cd.oI,backgroundColor:'rgba(22,78,99,.85)',borderRadius:0}];leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD Principal</div><div class="li"><div class="ls" style="background:#164e63"></div>OD Interest</div>`;}
+  }else if(type==='cumulative'){
     ct='line';
-    if(chartView==='both') {
-      ds=[
-        {label:'Standard',data:cd.sB,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
-        {label:'OD Loan', data:cd.oB,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.06)', fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard outstanding</div>
-           <div class="li"><div class="ls" style="background:#06b6d4"></div>OD outstanding</div>`;
-    } else if(chartView==='std') {
-      ds=[
-        {label:'Standard',data:cd.sB,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard outstanding</div>`;
-    } else {
-      ds=[
-        {label:'OD Loan', data:cd.oB,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.06)', fill:true,tension:.3,borderWidth:2,pointRadius:0},
-      ];
-      leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD outstanding</div>`;
-    }
+    if(chartView==='both'){ds=[{label:'Standard',data:cd.csI,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0},{label:'OD Loan',data:cd.coI,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard cum. interest</div><div class="li"><div class="ls" style="background:#06b6d4"></div>OD cum. interest</div>`;}
+    else if(chartView==='std'){ds=[{label:'Standard',data:cd.csI,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard cumulative interest</div>`;}
+    else{ds=[{label:'OD Loan',data:cd.coI,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.07)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD cumulative interest</div>`;}
+  }else{
+    ct='line';
+    if(chartView==='both'){ds=[{label:'Standard',data:cd.sB,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0},{label:'OD Loan',data:cd.oB,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard outstanding</div><div class="li"><div class="ls" style="background:#06b6d4"></div>OD outstanding</div>`;}
+    else if(chartView==='std'){ds=[{label:'Standard',data:cd.sB,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#f97316"></div>Standard outstanding</div>`;}
+    else{ds=[{label:'OD Loan',data:cd.oB,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0}];leg=`<div class="li"><div class="ls" style="background:#06b6d4"></div>OD outstanding</div>`;}
   }
-
   document.getElementById('cleg').innerHTML=leg;
-  ci=new Chart(ctx,{
-    type:ct,data:{labels:cd.L,datasets:ds},
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:{duration:300},
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:ttBg,borderColor:ttBr,borderWidth:1,
-          titleColor:ttTi,bodyColor:ttBo,
-          titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11},
-          callbacks:{label:c=>` ${c.dataset.label}: ₹${Math.round(c.parsed.y).toLocaleString('en-IN')}`}
-        }
-      },
-      scales:{
-        x:{stacked:type==='monthly',grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},maxTicksLimit:14}},
-        y:{stacked:type==='monthly',grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},
-          callback:v=>v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':v>=1e3?'₹'+(v/1e3).toFixed(0)+'K':'₹'+v
-        }}
-      }
-    }
-  });
+  ci=new Chart(ctx,{type:ct,data:{labels:cd.L,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:mkTip()},scales:{x:{stacked:type==='monthly',grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},maxTicksLimit:14}},y:{stacked:type==='monthly',grid:{color:gc},ticks:{color:tc,font:{family:'JetBrains Mono',size:9},callback:v=>v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':v>=1e3?'₹'+(v/1e3).toFixed(0)+'K':'₹'+v}}}}});
 }
 
-// ── Month table ────────────────────────────────────────────────────────────
-function setView(v,btn){
-  view=v;
-  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); buildMonthTable();
+// ─── Month table ──────────────────────────────────────────────────────────────
+function syncViewToggleUI(){
+  document.querySelectorAll('.vt [data-month-view]').forEach(b=>{b.classList.toggle('active',b.getAttribute('data-month-view')===view);});
+  document.querySelectorAll('#cvBoth,#cvStd,#cvOD').forEach(b=>b.classList.remove('active'));
+  document.getElementById(chartView==='std'?'cvStd':chartView==='od'?'cvOD':'cvBoth')?.classList.add('active');
 }
-
-function buildMonthTable(){ page=1; filterTable(); }
-
-function odMoMKind(r) {
-  const d = r.odDelta ?? 0;
-  if (r.month === 1 || d > 1) return 'up';
-  if (r.month > 1 && d < -1) return 'down';
-  return 'flat';
-}
-function odParkTagTitle(r) {
-  const tag = r.odParkTag || 'default';
-  if (tag === 'gap') return 'Gap (₹0 parked between overrides)';
-  if (tag === 'override' && Math.abs(r.odBal || 0) < 0.005) return 'Override parks ₹0';
-  if (tag === 'override') return 'Override range';
-  return 'Default parked OD';
-}
-/** Badge = parked OD vs prior month: ↑ first month or increase, ↓ decrease, · unchanged. */
-function odMonthBadgeHtml(r) {
-  const kind = odMoMKind(r);
-  const base = odParkTagTitle(r);
-  if (kind === 'up') {
-    const t = r.month === 1 ? `${base} · first month` : `${base} · parked OD higher than prior month`;
-    return `<span class="bdg bod-up" title="${t.replace(/"/g, '&quot;')}">OD↑</span>`;
-  }
-  if (kind === 'down') {
-    const t = `${base} · parked OD lower than prior month`;
-    return `<span class="bdg bod-dn" title="${t.replace(/"/g, '&quot;')}">OD↓</span>`;
-  }
-  if (Math.abs(r.odBal || 0) < 0.005) return '';
-  const t = `${base} · same parked OD as prior month`;
-  return `<span class="bdg bod-flat" title="${t.replace(/"/g, '&quot;')}">OD ·</span>`;
+function setView(v,btn){view=v;syncViewToggleUI();buildMonthTable();}
+function buildMonthTable(){page=1;filterTable();}
+function odMoMKind(r){const d=r.odDelta??0;if(r.month===1||d>1)return 'up';if(r.month>1&&d<-1)return 'down';return 'flat';}
+function odMonthBadgeHtml(r){
+  const kind=odMoMKind(r);
+  if(kind==='up'){const t=r.month===1?'First month':'OD parked ↑ vs prior month';return `<span class="bdg bod-up" title="${t}">OD↑</span>`;}
+  if(kind==='down'){return `<span class="bdg bod-dn" title="OD parked ↓ vs prior month">OD↓</span>`;}
+  if(Math.abs(r.odBal||0)<0.005)return '';
+  return `<span class="bdg bod-flat" title="OD parked unchanged">OD·</span>`;
 }
 function filterTable(){
   const q=(document.getElementById('srch')?.value||'').toLowerCase();
   filtered=schedule.filter(r=>{
     if(!q)return true;
-    return r.label.toLowerCase().includes(q)||
-           String(r.month).includes(q)||
-           (r.hasPP&&'prepay part'.includes(q))||
-           (r.odParkTag==='gap'&&('gap no od'.includes(q)))||
-           (r.odParkTag==='default'&&('od base default'.includes(q)))||
-           (r.odParkTag==='override'&&('od override od off'.includes(q)))||
-           (odMoMKind(r)==='up'&&(q.includes('od↑')||q.includes('od up')||(q.includes('increase')&&q.includes('od'))))||
-           (odMoMKind(r)==='down'&&(q.includes('od↓')||q.includes('od down')||(q.includes('decrease')&&q.includes('od'))))||
-           (odMoMKind(r)==='flat'&&Math.abs(r.odBal||0)>=0.005&&(q.includes('od ·')||(q.includes('unchanged')&&q.includes('od'))));
+    const rs=r.stdRate!=null?String(r.stdRate):'',ro=r.odRate!=null?String(r.odRate):'';
+    return r.label.toLowerCase().includes(q)||String(r.month).includes(q)||rs.includes(q)||ro.includes(q)||(r.hasPP&&'prepay part'.includes(q))||(r.rateChanged&&'rate change'.includes(q))||(r.odParkTag==='gap'&&'gap'.includes(q))||(r.odParkTag==='override'&&'override'.includes(q));
   });
-  page=1; renderTable();
+  page=1;renderTable();
 }
-
-function renderTable(opt){
-  const fullList = opt && opt.fullList === true;
-  const thead=document.getElementById('mt-head');
-  const tbody=document.getElementById('mt-body');
+function setMonthTablePageMode(val){if(val==='all')monthTableViewAll=true;else{monthTableViewAll=false;monthPageSize=MONTH_PAGE_SIZES.includes(parseInt(val,10))?parseInt(val,10):24;}page=1;renderTable();try{savePersistedState();}catch(e){}}
+/** which: 'std' | 'od' | 'both' — which rate columns to render (Std / OD / both). */
+function momRateColsHtml(r,prevRow,useBrandColors,which){
+  const rc=r.rateChanged?'crate':'cm';
+  const sStd=useBrandColors?' style="color:var(--std)"':'',sOd=useBrandColors?' style="color:var(--od)"':'';
+  let out='';
+  if(which!=='od'){const arrS=rateMomArrowHtml(r.stdRate,prevRow?.stdRate);out+=`<td class="${rc}"${sStd}>${arrS}${fmtPct(r.stdRate)}</td>`;}
+  if(which!=='std'){const arrO=rateMomArrowHtml(r.odRate,prevRow?.odRate);out+=`<td class="${rc}"${sOd}>${arrO}${fmtPct(r.odRate)}</td>`;}
+  return out;
+}
+function renderTable(){
+  const thead=document.getElementById('mt-head'),tbody=document.getElementById('mt-body');
+  const showMomRates=view==='both'||view==='std'||view==='od'||view==='diff';
+  const momRateSlice=view==='std'?'std':view==='od'?'od':'both';
   let h=`<tr><th style="text-align:left">Month</th>`;
-  if(view==='both'||view==='std') h+=`<th>Std EMI</th><th>Std Principal</th><th>Std Interest</th><th>Std Balance</th>`;
-  if(view==='both'||view==='od')  h+=`<th>OD Parked</th><th>Eff. Balance</th><th>OD EMI</th><th>OD Interest</th><th>OD Principal</th><th>OD Balance</th>`;
-  if(view==='diff') h+=`<th>Std Interest</th><th>OD Interest</th><th>Saving</th><th>Std Bal</th><th>OD Bal</th>`;
+  if(showMomRates){if(momRateSlice!=='od')h+=`<th style="color:var(--std)">Std Rate</th>`;if(momRateSlice!=='std')h+=`<th style="color:var(--od)">OD Rate</th>`;}
+  if(view==='both'||view==='std')h+=`<th>Std EMI</th><th>Std Principal</th><th>Std Interest</th><th>Std Balance</th>`;
+  if(view==='both'||view==='od')h+=`<th>OD Parked</th><th>Eff. Balance</th><th>OD EMI</th><th>OD Interest</th><th>OD Principal</th><th>OD Balance</th>`;
+  if(view==='rates')h+=`<th style="color:var(--std)">Std Rate</th><th style="color:var(--od)">OD Rate</th><th>Std EMI</th><th>Std Interest</th><th>OD EMI</th><th>OD Interest</th><th>Saving</th>`;
+  if(view==='diff')h+=`<th>Std Interest</th><th>OD Interest</th><th>Saving</th><th>Std Bal</th><th>OD Bal</th>`;
   h+=`<th>Prepay</th></tr>`;
   thead.innerHTML=h;
-
   const tot=filtered.length;
   let pageRows;
-  if (fullList) {
-    pageRows = filtered.slice();
-  } else if (monthTableViewAll) {
-    pageRows = filtered.slice();
-  } else {
-    const totalPages = Math.max(1, Math.ceil(tot / monthPageSize));
-    if (page > totalPages) page = totalPages;
-    if (page < 1) page = 1;
-    const start = (page - 1) * monthPageSize;
-    pageRows = filtered.slice(start, start + monthPageSize);
-  }
+  if(monthTableViewAll)pageRows=filtered.slice();
+  else{const totalPages=Math.max(1,Math.ceil(tot/monthPageSize));if(page>totalPages)page=totalPages;if(page<1)page=1;const start=(page-1)*monthPageSize;pageRows=filtered.slice(start,start+monthPageSize);}
   tbody.innerHTML='';
-
   pageRows.forEach(r=>{
     const tr=document.createElement('tr');
-    if(r.hasPP) tr.classList.add('rpp');
-    const odTag = r.odParkTag || 'default';
-    if(odTag==='default') tr.classList.add('rod-def');
+    if(r.hasPP)tr.classList.add('rpp');
+    if(r.rateChanged)tr.classList.add('rrate');
+    else if(r.odParkTag==='default')tr.classList.add('rod-def');
     else tr.classList.add('rod');
-
-    const badgeParts = (r.hasPP ? `<span class="bdg bpp">prepay</span>` : '') + odMonthBadgeHtml(r);
-    let c=`<td><span class="cm">M${r.month}</span> <span class="m-lbl">${r.label}</span>`;
-    if (badgeParts) c += `<span class="m-cell-badges">${badgeParts}</span>`;
-    c += `</td>`;
-
-    if(view==='both'||view==='std'){
-      c+=`<td class="cs">${fmtR(r.emiS)}</td>`;
-      c+=`<td class="cs">${fmtR(r.prinS)}</td>`;
-      c+=`<td class="cs">${fmtR(r.intS)}</td>`;
-      c+=`<td class="cm">${fmt(r.balS)}</td>`;
+    const badges=(r.hasPP?`<span class="bdg bpp">prepay</span>`:'')+odMonthBadgeHtml(r)+(r.rateChanged?`<span class="bdg brate">rate↕</span>`:'');
+    const prevMoRow=r.month>1?schedule[r.month-2]:null;
+    let c=`<td><span class="cm">M${r.month}</span> <span class="m-lbl">${r.label}</span>${badges?`<span class="m-cell-badges">${badges}</span>`:''}</td>`;
+    if(showMomRates)c+=momRateColsHtml(r,prevMoRow,true,momRateSlice);
+    if(view==='both'||view==='std'){c+=`<td class="cs">${fmtR(r.emiS)}</td><td class="cs">${fmtR(r.prinS)}</td><td class="cs">${fmtR(r.intS)}</td><td class="cm">${fmt(r.balS)}</td>`;}
+    if(view==='both'||view==='od'){c+=`<td class="ca">${fmt(r.odBal)}${fmtDeltaSpan(r.odDelta,'OD Parked')}</td><td class="cm">${fmt(r.effBalO)}</td><td class="co">${fmtR(r.emiO)}</td><td class="co">${fmtR(r.intO)}</td><td class="co">${fmtR(r.prinO)}</td><td class="cm">${fmt(r.balO)}</td>`;}
+    if(view==='rates'){
+      c+=momRateColsHtml(r,prevMoRow,false,'both');
+      c+=`<td class="cs">${fmtR(r.emiS)}</td><td class="cs">${fmtR(r.intS)}</td>`;
+      c+=`<td class="co">${fmtR(r.emiO)}</td><td class="co">${fmtR(r.intO)}</td>`;
+      const d=r.intDiff;c+=`<td class="${d>=0?'cg':'cr'}">${d>=0?'+':''}${fmtR(d)}</td>`;
     }
-    if(view==='both'||view==='od'){
-      c+=`<td class="ca">${fmt(r.odBal)}${fmtDeltaSpan(r.odDelta, 'Parked OD')}</td>`;
-      c+=`<td class="cm">${fmt(r.effBalO)}</td>`;
-      c+=`<td class="co">${fmtR(r.emiO)}</td>`;
-      c+=`<td class="co">${fmtR(r.intO)}</td>`;
-      c+=`<td class="co">${fmtR(r.prinO)}</td>`;
-      c+=`<td class="cm">${fmt(r.balO)}</td>`;
-    }
-    if(view==='diff'){
-      c+=`<td class="cs">${fmtR(r.intS)}</td>`;
-      c+=`<td class="co">${fmtR(r.intO)}</td>`;
-      const d=r.intDiff;
-      c+=`<td class="${d>=0?'cg':'cr'}">${d>=0?'+':''}${fmtR(d)}</td>`;
-      c+=`<td class="cm">${fmt(r.balS)}</td>`;
-      c+=`<td class="cm">${fmt(r.balO)}</td>`;
-    }
-
-    const pp=(r.ppS||0)+(r.ppO||0);
-    c+=`<td class="${pp>0?'ca':''}">${pp>0?fmt(pp):'—'}${ppMoMHtml(r)}</td>`;
-    tr.innerHTML=c; tbody.appendChild(tr);
+    if(view==='diff'){const d=r.intDiff;c+=`<td class="cs">${fmtR(r.intS)}</td><td class="co">${fmtR(r.intO)}</td><td class="${d>=0?'cg':'cr'}">${d>=0?'+':''}${fmtR(d)}</td><td class="cm">${fmt(r.balS)}</td><td class="cm">${fmt(r.balO)}</td>`;}
+    const pp=(r.ppS||0)+(r.ppO||0);c+=`<td class="${pp>0?'ca':''}">${pp>0?fmt(pp):'—'}</td>`;
+    tr.innerHTML=c;tbody.appendChild(tr);
   });
-
-  document.getElementById('rcnt').textContent = fullList
-    ? `${tot} rows (all)`
-    : (monthTableViewAll ? `${tot} rows (all in table)` : `${tot} rows`);
-  if (fullList) {
-    document.getElementById('pgn').innerHTML = '';
-  } else {
-    renderPagination(tot);
-  }
+  document.getElementById('rcnt').textContent=monthTableViewAll?`${tot} rows (all)`:`${tot} rows`;
+  renderPagination(tot);
 }
-
 function renderPagination(tot){
-  const pg=document.getElementById('pgn');
-  pg.innerHTML='';
-
-  const toolbar=document.createElement('div');
-  toolbar.className='pg-toolbar';
-  const lab=document.createElement('span');
-  lab.className='pi';
-  lab.textContent='Per page';
-  toolbar.appendChild(lab);
-  const sel=document.createElement('select');
-  sel.className='pg-sel';
-  sel.setAttribute('aria-label','Rows per page');
-  MONTH_PAGE_SIZES.forEach(sz=>{
-    const o=document.createElement('option');
-    o.value=String(sz);
-    o.textContent=String(sz);
-    if(!monthTableViewAll&&monthPageSize===sz)o.selected=true;
-    sel.appendChild(o);
-  });
-  const oAll=document.createElement('option');
-  oAll.value='all';
-  oAll.textContent='All';
-  if(monthTableViewAll)oAll.selected=true;
-  sel.appendChild(oAll);
-  sel.onchange=()=>setMonthTablePageMode(sel.value);
-  toolbar.appendChild(sel);
-  pg.appendChild(toolbar);
-
-  if(monthTableViewAll){
-    const info=document.createElement('span');
-    info.className='pi';
-    info.textContent=tot?`Showing all ${tot} rows`:'';
-    pg.appendChild(info);
-    return;
-  }
-
-  const totalPages=Math.max(1,Math.ceil(tot/monthPageSize));
-  if(page>totalPages)page=totalPages;
-  if(page<1)page=1;
-
-  const mid=document.createElement('div');
-  mid.className='pg-mid';
-
-  if(totalPages>1){
-    const prev=document.createElement('button');
-    prev.className='pb2'; prev.textContent='← Prev'; prev.disabled=page<=1;
-    prev.onclick=()=>{page--;renderTable();};
-    mid.appendChild(prev);
-
-    let s=Math.max(1,page-3),e=Math.min(totalPages,s+6);
-    if(e-s<6)s=Math.max(1,e-6);
-    for(let p=s;p<=e;p++){
-      const b=document.createElement('button');
-      b.className='pb2'+(p===page?' act':''); b.textContent=p;
-      b.onclick=((_p)=>()=>{page=_p;renderTable();})(p);
-      mid.appendChild(b);
-    }
-
-    const next=document.createElement('button');
-    next.className='pb2'; next.textContent='Next →'; next.disabled=page>=totalPages;
-    next.onclick=()=>{page++;renderTable();};
-    mid.appendChild(next);
-  }
+  const pg=document.getElementById('pgn');pg.innerHTML='';
+  const toolbar=document.createElement('div');toolbar.className='pg-toolbar';
+  const lab=document.createElement('span');lab.className='pi';lab.textContent='Per page';toolbar.appendChild(lab);
+  const sel=document.createElement('select');sel.className='pg-sel';sel.setAttribute('aria-label','Rows per page');
+  MONTH_PAGE_SIZES.forEach(sz=>{const o=document.createElement('option');o.value=String(sz);o.textContent=String(sz);if(!monthTableViewAll&&monthPageSize===sz)o.selected=true;sel.appendChild(o);});
+  const oAll=document.createElement('option');oAll.value='all';oAll.textContent='All';if(monthTableViewAll)oAll.selected=true;sel.appendChild(oAll);
+  sel.onchange=()=>setMonthTablePageMode(sel.value);toolbar.appendChild(sel);pg.appendChild(toolbar);
+  if(monthTableViewAll){const info=document.createElement('span');info.className='pi';info.textContent=tot?`Showing all ${tot} rows`:'';pg.appendChild(info);return;}
+  const totalPages=Math.max(1,Math.ceil(tot/monthPageSize));if(page>totalPages)page=totalPages;if(page<1)page=1;
+  const mid=document.createElement('div');mid.className='pg-mid';
+  if(totalPages>1){const prev=document.createElement('button');prev.className='pb2';prev.textContent='← Prev';prev.disabled=page<=1;prev.onclick=()=>{page--;renderTable();};mid.appendChild(prev);let s=Math.max(1,page-3),e=Math.min(totalPages,s+6);if(e-s<6)s=Math.max(1,e-6);for(let p=s;p<=e;p++){const b=document.createElement('button');b.className='pb2'+(p===page?' act':'');b.textContent=p;b.onclick=((_p)=>()=>{page=_p;renderTable();})( p);mid.appendChild(b);}const next=document.createElement('button');next.className='pb2';next.textContent='Next →';next.disabled=page>=totalPages;next.onclick=()=>{page++;renderTable();};mid.appendChild(next);}
   pg.appendChild(mid);
-
-  const info=document.createElement('span');
-  info.className='pi';
-  if(!tot)info.textContent='';
-  else if(totalPages<=1)info.textContent=`Showing ${tot} of ${tot}`;
-  else info.textContent=`Page ${page}/${totalPages} · ${(page-1)*monthPageSize+1}–${Math.min(page*monthPageSize,tot)} of ${tot}`;
-  pg.appendChild(info);
+  const info=document.createElement('span');info.className='pi';if(!tot)info.textContent='';else if(totalPages<=1)info.textContent=`Showing ${tot} of ${tot}`;else info.textContent=`Page ${page}/${totalPages} · ${(page-1)*monthPageSize+1}–${Math.min(page*monthPageSize,tot)} of ${tot}`;pg.appendChild(info);
 }
 
-// ── Year table ─────────────────────────────────────────────────────────────
-function buildYearTable(rows, T){
-  const tbody=document.getElementById('yt-body');
-  tbody.innerHTML='';
+// ─── Year table ───────────────────────────────────────────────────────────────
+function buildYearTable(rows,T){
+  const tbody=document.getElementById('yt-body');tbody.innerHTML='';
   let tSP=0,tSI=0,tOP=0,tOI=0,tPP=0;
-
   for(let y=1;y<=T;y++){
-    const sl=rows.filter(r=>r.month>=(y-1)*12+1&&r.month<=y*12);
-    if(!sl.length)break;
-    const sP=sl.reduce((s,r)=>s+r.prinS,0), sI=sl.reduce((s,r)=>s+r.intS,0);
-    const oP=sl.reduce((s,r)=>s+r.prinO,0), oI=sl.reduce((s,r)=>s+r.intO,0);
+    const sl=rows.filter(r=>r.month>=(y-1)*12+1&&r.month<=y*12);if(!sl.length)break;
+    const sP=sl.reduce((s,r)=>s+r.prinS,0),sI=sl.reduce((s,r)=>s+r.intS,0);
+    const oP=sl.reduce((s,r)=>s+r.prinO,0),oI=sl.reduce((s,r)=>s+r.intO,0);
     const pp=sl.reduce((s,r)=>s+r.ppS+r.ppO,0);
-    const sB=sl[sl.length-1].balS, oB=sl[sl.length-1].balO;
-    const sv=sI-oI;
+    const sB=sl[sl.length-1].balS,oB=sl[sl.length-1].balO,sv=sI-oI;
+    // Rate range for this year
+    const stdRates=[...new Set(sl.map(r=>r.stdRate?.toFixed(2)))].join('/');
+    const odRates=[...new Set(sl.map(r=>r.odRate?.toFixed(2)))].join('/');
     tSP+=sP;tSI+=sI;tOP+=oP;tOI+=oI;tPP+=pp;
-
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>Year ${y}</td>
+      <td class="crate">${stdRates}%</td><td class="crate">${odRates}%</td>
       <td class="cs">${fmt(sP)}</td><td class="cs">${fmt(sI)}</td><td class="cm">${fmt(sB)}</td>
       <td class="co">${fmt(oP)}</td><td class="co">${fmt(oI)}</td><td class="cm">${fmt(oB)}</td>
       <td class="${pp>0?'ca':''}">${pp>0?fmt(pp):'—'}</td>
       <td class="${sv>=0?'cg':'cr'}">${sv>=0?'+':''}${fmt(sv)}</td>`;
     tbody.appendChild(tr);
   }
-
   const tv=tSI-tOI;
-  const ttr=document.createElement('tr');
-  ttr.className='tot';
-  ttr.innerHTML=`<td>TOTAL</td>
+  const ttr=document.createElement('tr');ttr.className='tot';
+  ttr.innerHTML=`<td>TOTAL</td><td class="crate" colspan="2">—</td>
     <td class="cs">${fmt(tSP)}</td><td class="cs">${fmt(tSI)}</td><td class="cm">—</td>
     <td class="co">${fmt(tOP)}</td><td class="co">${fmt(tOI)}</td><td class="cm">—</td>
     <td class="${tPP>0?'ca':''}">${tPP>0?fmt(tPP):'—'}</td>
@@ -1761,16 +1028,10 @@ function buildYearTable(rows, T){
   tbody.appendChild(ttr);
 }
 
+// ─── Init ─────────────────────────────────────────────────────────────────────
 fillStartYearSelect();
-if (loadPersistedState()) {
-  requestAnimationFrame(() => {
-    try {
-      calculate();
-    } catch (e) { /* invalid saved data */ }
-  });
-} else {
-  initTheme();
-}
+if(loadPersistedState()){requestAnimationFrame(()=>{try{calculate();}catch(e){}});}
+else{initTheme();ensureDefaultPeriodRows();}
 </script>
 </body>
 </html>
