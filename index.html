@@ -75,6 +75,8 @@ h1 span{color:var(--accent);}
 .field select option{background:var(--surface2);color:var(--text);}
 html[data-theme="light"] .field select option{background:#fff;}
 .unit{font-size:10px;color:var(--muted);margin-top:3px;}
+.loan-start-pair{display:flex;gap:12px;align-items:stretch;margin-top:4px;}
+.loan-start-pair select{flex:1;min-width:0;}
 
 /* Grids */
 .g3{display:grid;grid-template-columns:repeat(3,minmax(min(100%,200px),1fr));gap:16px;margin-bottom:16px;}
@@ -275,7 +277,17 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
 <div class="g3">
   <div class="field"><label>Principal (₹)</label><input type="number" id="principal" value="5000000"><div class="unit">e.g. 50,00,000 = 50 Lakhs</div></div>
   <div class="field"><label>Tenure (Years)</label><input type="number" id="tenure" value="20" min="1" max="30" onchange="onLoanTimelineChanged()"></div>
-  <div class="field"><label>Loan Start Year</label><select id="startYear" onchange="onLoanTimelineChanged()"></select><div class="unit">used for month labels; year lists span loan start through start + tenure</div></div>
+  <div class="field"><label>Loan start</label>
+    <div class="loan-start-pair">
+      <select id="startYear" onchange="onLoanTimelineChanged()" aria-label="Start year"></select>
+      <select id="startMonth" onchange="onLoanTimelineChanged()" aria-label="Start month">
+        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option>
+        <option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option>
+        <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      </select>
+    </div>
+    <div class="unit">First EMI month; part-payment / OD dates use this anchor; year lists span start year through start + tenure</div>
+  </div>
 </div>
 
 <!-- Loan rate blocks -->
@@ -427,7 +439,12 @@ let ci = null;          // chart instance
 let cd = {};            // chart data
 
 const LS_KEY = 'hl-compass-v1';
-const INPUT_DEFAULTS = { principal: '5000000', tenure: '20', startYear: '2025', stdRate: '8.50', odRate: '8.75', odDef: '500000' };
+const INPUT_DEFAULTS = { principal: '5000000', tenure: '20', startYear: '2025', startMonth: '1', stdRate: '8.50', odRate: '8.75', odDef: '500000' };
+function getLoanStartMonth() {
+  const m = parseInt(document.getElementById('startMonth')?.value, 10);
+  if (Number.isNaN(m) || m < 1 || m > 12) return 1;
+  return m;
+}
 function getLoanYearBounds() {
   const sy = parseInt(document.getElementById('startYear')?.value, 10) || 2025;
   const ten = parseInt(document.getElementById('tenure')?.value, 10) || 20;
@@ -574,12 +591,11 @@ function ppMoMHtml(r) {
   return fmtDeltaSpan(d, 'Part payment');
 }
 
-function monthStr(m, startYear) {
+function monthStr(m, startYear, startMonth) {
+  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
+  const d = new Date(startYear, sm - 1 + (m - 1), 1);
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const totalMonths = (startYear - 2025) * 12 + m - 1; // offset from 2025-01
-  const d = new Date(2025, 0 + totalMonths);
-  const yr = d.getFullYear();
-  return `${months[d.getMonth()]} ${yr}`;
+  return `${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 // ── Panel toggle ───────────────────────────────────────────────────────────
@@ -748,6 +764,7 @@ function odPeriodIsLast(op) {
 function syncODTillEndRules() {
   if (ops.length === 0) return;
   const startYear = parseInt(document.getElementById('startYear').value, 10) || 2025;
+  const startMonth = getLoanStartMonth();
   const tenureMonths = parseInt(document.getElementById('tenure').value, 10) * 12 || 240;
   ops.forEach((op, i) => {
     const isLast = i === ops.length - 1;
@@ -756,15 +773,16 @@ function syncODTillEndRules() {
       op.tillEnd = false;
       if (hadTillEnd || !op.toYear || !op.toMonth) {
         const next = ops[i + 1];
-        const nextStart = yearMonthToAbsMonth(next.fromYear, next.fromMonth, startYear);
+        const nextStart = yearMonthToAbsMonth(next.fromYear, next.fromMonth, startYear, startMonth);
         if (nextStart > 1) {
-          const endM = nextStart - 1;
-          op.toYear = startYear + Math.floor((endM - 1) / 12);
-          op.toMonth = ((endM - 1) % 12) + 1;
+          const endAbs = nextStart - 1;
+          const cal = absScheduleIndexToYearMonth(endAbs, startYear, startMonth);
+          op.toYear = cal.year;
+          op.toMonth = cal.month;
         } else {
-          const endM = tenureMonths;
-          op.toYear = startYear + Math.floor((endM - 1) / 12);
-          op.toMonth = ((endM - 1) % 12) + 1;
+          const cal = absScheduleIndexToYearMonth(tenureMonths, startYear, startMonth);
+          op.toYear = cal.year;
+          op.toMonth = cal.month;
         }
       }
     }
@@ -816,19 +834,21 @@ function redrawAllOPRows() {
   });
 }
 /** Before schedule: end each prior period the month before the next period's start (when next has a valid from). */
-function normalizeODPeriodsForSubmit(startYear) {
+function normalizeODPeriodsForSubmit(startYear, startMonth) {
   let changed = false;
   let closedTillEnd = false;
+  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
   for (let i = 1; i < ops.length; i++) {
     const cur = ops[i];
-    const newStart = yearMonthToAbsMonth(cur.fromYear, cur.fromMonth, startYear);
+    const newStart = yearMonthToAbsMonth(cur.fromYear, cur.fromMonth, startYear, sm);
     if (newStart <= 0) continue;
     const prev = ops[i - 1];
-    const endM = newStart - 1;
-    if (endM < 1) continue;
-    const endYear = startYear + Math.floor((endM - 1) / 12);
-    const endMonth = ((endM - 1) % 12) + 1;
-    const prevEnd = prev.tillEnd ? Infinity : yearMonthToAbsMonth(prev.toYear, prev.toMonth, startYear);
+    const endAbs = newStart - 1;
+    if (endAbs < 1) continue;
+    const cal = absScheduleIndexToYearMonth(endAbs, startYear, sm);
+    const endYear = cal.year;
+    const endMonth = cal.month;
+    const prevEnd = prev.tillEnd ? Infinity : yearMonthToAbsMonth(prev.toYear, prev.toMonth, startYear, sm);
     if (prev.tillEnd || !prev.toYear || !prev.toMonth || (prevEnd > 0 && prevEnd >= newStart)) {
       if (prev.tillEnd) closedTillEnd = true;
       prev.tillEnd = false;
@@ -985,20 +1005,27 @@ function delOP(id) {
   redrawAllOPRows();
 }
 
-// ── Helper: Convert year/month to absolute month ─────────────────────────────
-function yearMonthToAbsMonth(year, month, startYear) {
-  if(!year || !month) return 0;
-  return (year - startYear) * 12 + month;
+// ── Helper: calendar (year, month) → 1-based schedule index from loan start (startYear, startMonth) ──
+function yearMonthToAbsMonth(year, month, startYear, startMonth) {
+  if (!year || !month) return 0;
+  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
+  return (year * 12 + (month - 1)) - (startYear * 12 + (sm - 1)) + 1;
+}
+/** Schedule index (1 = first EMI) → calendar year & month (1–12). */
+function absScheduleIndexToYearMonth(absIdx, startYear, startMonth) {
+  const sm = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
+  const d = new Date(startYear, sm - 1 + (absIdx - 1), 1);
+  return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
 
 // ── OD balance for month (+ tag for UI): default | override | gap ──────────
-function odParkMeta(m, def, startYear, totMonths) {
+function odParkMeta(m, def, startYear, startMonth, totMonths) {
   if (!totMonths) totMonths = parseInt(document.getElementById('tenure').value) * 12 || 240;
   let b = def;
   let matched = false;
   for (const p of ops) {
-    const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear);
-    const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear);
+    const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear, startMonth);
+    const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear, startMonth);
     if (fromM > 0 && toM >= fromM && m >= fromM && m <= toM) {
       b = p.balance;
       matched = true;
@@ -1008,8 +1035,8 @@ function odParkMeta(m, def, startYear, totMonths) {
   if (ops.length === 0) return { amount: def, tag: 'default' };
   const ivs = ops
     .map(p => {
-      const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear);
-      const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear);
+      const fromM = yearMonthToAbsMonth(p.fromYear, p.fromMonth, startYear, startMonth);
+      const toM = p.tillEnd ? totMonths : yearMonthToAbsMonth(p.toYear, p.toMonth, startYear, startMonth);
       return { fromM, toM };
     })
     .filter(x => x.fromM > 0 && x.toM >= x.fromM)
@@ -1021,14 +1048,15 @@ function odParkMeta(m, def, startYear, totMonths) {
   }
   return { amount: def, tag: 'default' };
 }
-function odBalForMonth(m, def, startYear, totMonths) {
-  return odParkMeta(m, def, startYear, totMonths).amount;
+function odBalForMonth(m, def, startYear, startMonth, totMonths) {
+  return odParkMeta(m, def, startYear, startMonth, totMonths).amount;
 }
 
 // ── Core amortization ──────────────────────────────────────────────────────
 function computeSchedules(P, sR, oR, months, odDef) {
   const rS = sR/100/12, rO = oR/100/12;
   const startYear = parseInt(document.getElementById('startYear').value)||2025;
+  const startMonth = getLoanStartMonth();
 
   // Base EMIs (no prepayments)
   const baseEmiS = (P*rS*Math.pow(1+rS,months))/(Math.pow(1+rS,months)-1);
@@ -1045,17 +1073,17 @@ function computeSchedules(P, sR, oR, months, odDef) {
 
     // Prepayments before EMI - convert year/month to absolute month
     const ppS = pps.filter(p=>{
-      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear);
+      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear, startMonth);
       return pMonth===m && (p.to==='both'||p.to==='std');
     }).reduce((s,p)=>s+p.amount,0);
     const ppO = pps.filter(p=>{
-      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear);
+      const pMonth = yearMonthToAbsMonth(p.year, p.month, startYear, startMonth);
       return pMonth===m && (p.to==='both'||p.to==='od');
     }).reduce((s,p)=>s+p.amount,0);
     balS = Math.max(balS-ppS, 0);
     balO = Math.max(balO-ppO, 0);
 
-    const odMeta = odParkMeta(m, odDef, startYear, months);
+    const odMeta = odParkMeta(m, odDef, startYear, startMonth, months);
     const odBal = odMeta.amount;
     const odParkTag = odMeta.tag;
     const ppTot = ppS + ppO;
@@ -1088,7 +1116,7 @@ function computeSchedules(P, sR, oR, months, odDef) {
     }
 
     rows.push({
-      month:m, label:monthStr(m,startYear),
+      month:m, label:monthStr(m, startYear, startMonth),
       emiS, intS, prinS, balS, ppS,
       emiO, intO, prinO, balO, ppO, odBal, effBalO,
       intDiff: intS-intO,
@@ -1111,6 +1139,7 @@ function collectPersistPayload() {
     principal: document.getElementById('principal')?.value ?? '',
     tenure: document.getElementById('tenure')?.value ?? '',
     startYear: document.getElementById('startYear')?.value ?? '',
+    startMonth: document.getElementById('startMonth')?.value ?? '',
     stdRate: document.getElementById('stdRate')?.value ?? '',
     odRate: document.getElementById('odRate')?.value ?? '',
     odDef: document.getElementById('odDef')?.value ?? '',
@@ -1149,6 +1178,7 @@ function loadPersistedState() {
     setv('principal', s.principal);
     setv('tenure', s.tenure);
     setv('startYear', s.startYear);
+    setv('startMonth', s.startMonth != null && s.startMonth !== '' ? s.startMonth : '1');
     setv('stdRate', s.stdRate);
     setv('odRate', s.odRate);
     setv('odDef', s.odDef);
@@ -1234,14 +1264,15 @@ function calculate() {
   const oR  = parseFloat(document.getElementById('odRate').value)||0;
   const odD = parseFloat(document.getElementById('odDef').value)||0;
   const startYear = parseInt(document.getElementById('startYear').value)||2025;
+  const startMonth = getLoanStartMonth();
   if (!P||!T||!sR||!oR) { alert('Fill in all required fields'); return; }
 
   // Pre-populate OD tenure if none exist
   if(ops.length === 0 && odD > 0) {
-    addOP(startYear, 1, '', '', odD, true, { skipAutoEdit: true });
+    addOP(startYear, startMonth, '', '', odD, true, { skipAutoEdit: true });
   }
 
-  const norm = normalizeODPeriodsForSubmit(startYear);
+  const norm = normalizeODPeriodsForSubmit(startYear, startMonth);
   if (norm.changed) {
     redrawAllOPRows();
     setOpAdjustMsg(true, norm.message);
