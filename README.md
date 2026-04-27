@@ -67,13 +67,3 @@ No build step, no `npm install`. Clone or download the file and open it locally 
 For richer search and social previews, add a `<meta name="description">` and Open Graph (`og:title`, `og:description`, `og:url`) tags to the `<head>` of `index.html`. The content above describes the tool in terms people search for: **India home loan calculator**, **OD vs standard home loan**, **MaxGain-style OD loan**, **prepayment amortisation**, and **floating rate schedule**.
 
 ---
-
-## License
-
-If you add a license file (e.g. MIT), describe it here. Until then, treat usage as at your own discretion for personal or internal use.
-
----
-
-## Contributing
-
-Issues and pull requests are welcome: keep changes focused, preserve the single-file layout unless you intentionally split the project.
