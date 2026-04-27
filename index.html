@@ -106,6 +106,11 @@ html[data-theme="light"] .loan-block .field{background:rgba(255,255,255,.85);bor
 
 /* Event rows */
 .ev-row{display:grid;grid-template-columns:minmax(112px,1.1fr) minmax(104px,1fr) minmax(128px,1.2fr) minmax(160px,2fr) 40px;gap:10px;align-items:end;margin-bottom:8px;}
+.ev-row.pp-row{grid-template-columns:minmax(112px,1.1fr) minmax(104px,1fr) minmax(128px,1.2fr) minmax(160px,2fr) auto 40px;align-items:stretch;}
+.ev-row.pp-row .field{margin:0;}
+.ev-row.pp-row .op-actions{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;padding:8px 0;}
+.ev-row.pp-row .op-actions .del-btn{flex-shrink:0;}
+.ev-row.pp-row.pp-row--focus{outline:2px solid rgba(167,139,250,.55);outline-offset:3px;border-radius:10px;transition:outline .15s;}
 .ev-row .field{margin:0;}
 .ev-row .field input,.ev-row .field select{font-size:13px;}
 .op-row{display:grid;grid-template-columns:minmax(100px,1.1fr) minmax(100px,1fr) minmax(92px,1fr) minmax(92px,1fr) minmax(160px,1.2fr) minmax(140px,1.5fr) auto;gap:10px;align-items:stretch;margin-bottom:10px;grid-auto-flow:dense;}
@@ -264,7 +269,7 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
 
 <div class="tag">Home Loan Compare</div>
 <h1>Standard vs <span>OD Loan</span><br>Deep Compare</h1>
-<p class="sub">// Part payments · OD period overrides · Month drill-down </p>
+<p class="sub">// Part payments · OD period overrides · Month drill-down · r/indianrealestate AMA</p>
 
 <!-- Base inputs -->
 <div class="g3">
@@ -390,6 +395,8 @@ html[data-theme="light"] .calc-btn{color:#1e1b4b;}
 // ── State ──────────────────────────────────────────────────────────────────
 let pps = [];           // prepays
 let ops = [];           // OD period overrides
+let ppEditingId = null; // part-payment row in edit mode
+let ppEditSnapshot = null;
 let odEditingId = null; // OD override row in edit mode (Apply / Cancel visible)
 let odEditSnapshot = null; // shallow clone for cancel
 let schedule = [];      // full computed schedule
@@ -456,19 +463,15 @@ function fillStartYearSelect(optYear) {
 }
 function onLoanTimelineChanged() {
   fillStartYearSelect();
-  document.querySelectorAll('[id^="ppYear"]').forEach(el => {
-    const rid = el.id.replace(/^ppYear/, '');
-    const p = pps.find(x => String(x.id) === rid);
-    if (!p) return;
+  pps.forEach(p => {
     const { minY, maxY } = getLoanYearBounds();
     let y = parseInt(p.year, 10) || 0;
     if (y && (y < minY || y > maxY)) {
       y = Math.max(minY, Math.min(maxY, y));
       p.year = y;
     }
-    el.innerHTML = yearOptionsInnerHtml(p.year, true, minY, maxY);
-    el.value = p.year ? String(p.year) : '';
   });
+  redrawAllPPRows();
   redrawAllOPRows();
   try {
     savePersistedState();
@@ -585,50 +588,7 @@ function togglePanel(h) {
   h.nextElementSibling.classList.toggle('open');
 }
 
-// ── Part Payments ──────────────────────────────────────────────────────────
-function addPP(year='', month='', amt='', to='both') {
-  const id = uid();
-  const startYear = parseInt(document.getElementById('startYear').value)||2025;
-  const toVal = (to === 'std' || to === 'od') ? to : 'both';
-  pps.push({ id, year: year?parseInt(year):0, month: month?parseInt(month):0, amount: amt?parseFloat(amt):0, to: toVal });
-  const div = document.createElement('div');
-  div.className = 'ev-row'; div.id = 'pp'+id;
-  const currentYear = startYear;
-  div.innerHTML = `
-    <div class="field"><label>Year</label><select onchange="updPP(${id},'year',this.value)" id="ppYear${id}">${yearOptionsInnerHtml(year, true)}</select></div>
-    <div class="field"><label>Month</label><select onchange="updPP(${id},'month',this.value)">
-      <option value=""></option>
-      <option value="1" ${month==='1'||month===1?'selected':''}>Jan</option>
-      <option value="2" ${month==='2'||month===2?'selected':''}>Feb</option>
-      <option value="3" ${month==='3'||month===3?'selected':''}>Mar</option>
-      <option value="4" ${month==='4'||month===4?'selected':''}>Apr</option>
-      <option value="5" ${month==='5'||month===5?'selected':''}>May</option>
-      <option value="6" ${month==='6'||month===6?'selected':''}>Jun</option>
-      <option value="7" ${month==='7'||month===7?'selected':''}>Jul</option>
-      <option value="8" ${month==='8'||month===8?'selected':''}>Aug</option>
-      <option value="9" ${month==='9'||month===9?'selected':''}>Sep</option>
-      <option value="10" ${month==='10'||month===10?'selected':''}>Oct</option>
-      <option value="11" ${month==='11'||month===11?'selected':''}>Nov</option>
-      <option value="12" ${month==='12'||month===12?'selected':''}>Dec</option>
-    </select></div>
-    <div class="field"><label>Amount ₹</label><input type="number" placeholder="200000" value="${amt}" onchange="updPP(${id},'amount',this.value)"></div>
-    <div class="field"><label>Apply To</label>
-      <select onchange="updPP(${id},'to',this.value)">
-        <option value="both" ${to==='both'?'selected':''}>Both loans</option>
-        <option value="std"  ${to==='std'?'selected':''}>Standard only</option>
-        <option value="od"   ${to==='od'?'selected':''}>OD only</option>
-      </select>
-    </div>
-    <button class="del-btn" onclick="delPP(${id})">✕</button>`;
-  document.getElementById('pp-list').appendChild(div);
-}
-function updPP(id, k, v) {
-  const p = pps.find(x=>x.id===id); if(!p) return;
-  p[k] = (k==='month'||k==='year'||k==='amount') ? parseFloat(v)||0 : v;
-}
-function delPP(id) { pps=pps.filter(x=>x.id!==id); document.getElementById('pp'+id)?.remove(); }
-
-// ── OD Periods ─────────────────────────────────────────────────────────────
+// ── OD Periods (MO_SHORT + monthSelect used by OD + part payments) ─────────
 const MO_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function monthSelectOptionsHtml(selected) {
   let h = '<option value=""></option>';
@@ -638,6 +598,149 @@ function monthSelectOptionsHtml(selected) {
   }
   return h;
 }
+
+// ── Part Payments ──────────────────────────────────────────────────────────
+function clonePpSnapshot(p) {
+  return { id: p.id, year: p.year, month: p.month, amount: p.amount, to: p.to };
+}
+function ppRowInnerHTML(p) {
+  const id = p.id;
+  const editing = ppEditingId === id;
+  const ro = editing ? '' : ' disabled';
+  const year = p.year || '';
+  const month = p.month || '';
+  const amt = p.amount != null && p.amount !== '' && !Number.isNaN(Number(p.amount)) ? p.amount : '';
+  const toVal = p.to === 'std' || p.to === 'od' ? p.to : 'both';
+  const actionsHtml = editing
+    ? `<button type="button" class="apply-op-btn" onclick="commitPPRow(${id})">Apply</button>
+      <button type="button" class="cancel-op-btn" onclick="cancelPPRowEdit(${id})">Cancel</button>`
+    : `<button type="button" class="edit-op-btn" onclick="beginPPRowEdit(${id})">Edit</button>`;
+  return `
+    <div class="field"><label>Year</label><select onchange="updPP(${id},'year',this.value)" id="ppYear${id}"${ro}>${yearOptionsInnerHtml(year, true)}</select></div>
+    <div class="field"><label>Month</label><select onchange="updPP(${id},'month',this.value)" id="ppMonth${id}"${ro}>${monthSelectOptionsHtml(month)}</select></div>
+    <div class="field"><label>Amount ₹</label><input type="number" placeholder="200000" value="${amt}" onchange="updPP(${id},'amount',this.value)" id="ppAmount${id}"${ro}></div>
+    <div class="field"><label>Apply To</label>
+      <select onchange="updPP(${id},'to',this.value)" id="ppTo${id}"${ro}>
+        <option value="both" ${toVal === 'both' ? 'selected' : ''}>Both loans</option>
+        <option value="std"  ${toVal === 'std' ? 'selected' : ''}>Standard only</option>
+        <option value="od"   ${toVal === 'od' ? 'selected' : ''}>OD only</option>
+      </select>
+    </div>
+    <div class="op-actions">
+      ${actionsHtml}
+      <button type="button" class="del-btn" onclick="delPP(${id})" aria-label="Remove part payment">✕</button>
+    </div>`;
+}
+function redrawAllPPRows() {
+  pps.forEach(p => {
+    const div = document.getElementById('pp' + p.id);
+    if (div) div.innerHTML = ppRowInnerHTML(p);
+  });
+}
+function addPP(year = '', month = '', amt = '', to = 'both', options = {}) {
+  const { skipAutoEdit = false } = options;
+  const id = uid();
+  const toVal = to === 'std' || to === 'od' ? to : 'both';
+  pps.push({
+    id,
+    year: year ? parseInt(year, 10) : 0,
+    month: month ? parseInt(month, 10) : 0,
+    amount: amt !== '' && amt != null ? parseFloat(amt) : 0,
+    to: toVal
+  });
+  const p = pps[pps.length - 1];
+  if (!skipAutoEdit) {
+    if (ppEditingId && ppEditingId !== id) cancelPPRowEdit(ppEditingId);
+    if (odEditingId) cancelOPRowEdit(odEditingId);
+    ppEditingId = id;
+    ppEditSnapshot = clonePpSnapshot(p);
+  }
+  const div = document.createElement('div');
+  div.className = 'ev-row pp-row';
+  div.id = 'pp' + id;
+  document.getElementById('pp-list').appendChild(div);
+  /* Same pattern as addOP + redrawAllOPRows: redraw picks up ppEditingId so the new row is editable in one step */
+  redrawAllPPRows();
+  if (!skipAutoEdit) {
+    div.classList.add('pp-row--focus');
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    requestAnimationFrame(() => {
+      const el = document.getElementById('ppYear' + id);
+      if (el) {
+        el.focus();
+        try {
+          el.select();
+        } catch (e) { /* */ }
+      }
+    });
+  }
+}
+function updPP(id, k, v) {
+  if (ppEditingId !== id) return;
+  const p = pps.find(x => x.id === id);
+  if (!p) return;
+  p[k] = k === 'month' || k === 'year' || k === 'amount' ? parseFloat(v) || 0 : v;
+}
+function delPP(id) {
+  if (ppEditingId === id) {
+    ppEditingId = null;
+    ppEditSnapshot = null;
+  }
+  pps = pps.filter(x => x.id !== id);
+  document.getElementById('pp' + id)?.remove();
+}
+function beginPPRowEdit(id) {
+  const p = pps.find(x => x.id === id);
+  if (!p) return;
+  if (odEditingId) cancelOPRowEdit(odEditingId);
+  if (ppEditingId && ppEditingId !== id) cancelPPRowEdit(ppEditingId);
+  if (ppEditingId === id) return;
+  ppEditingId = id;
+  ppEditSnapshot = clonePpSnapshot(p);
+  redrawAllPPRows();
+  const wrap = document.getElementById('pp' + id);
+  if (!wrap) return;
+  wrap.classList.add('pp-row--focus');
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  requestAnimationFrame(() => {
+    const el = document.getElementById('ppYear' + id);
+    if (el) {
+      el.focus();
+      try {
+        el.select();
+      } catch (e) { /* */ }
+    }
+  });
+}
+function cancelPPRowEdit(id) {
+  if (ppEditingId !== id) return;
+  const p = pps.find(x => x.id === id);
+  if (p && ppEditSnapshot && ppEditSnapshot.id === id) Object.assign(p, ppEditSnapshot);
+  ppEditingId = null;
+  ppEditSnapshot = null;
+  redrawAllPPRows();
+  document.getElementById('pp' + id)?.classList.remove('pp-row--focus');
+}
+function commitPPRow(id) {
+  const p = pps.find(x => x.id === id);
+  if (!p || ppEditingId !== id) return;
+  const yEl = document.getElementById('ppYear' + id);
+  const mEl = document.getElementById('ppMonth' + id);
+  const aEl = document.getElementById('ppAmount' + id);
+  const tEl = document.getElementById('ppTo' + id);
+  if (yEl) p.year = parseInt(yEl.value, 10) || 0;
+  if (mEl) p.month = parseInt(mEl.value, 10) || 0;
+  if (aEl) p.amount = parseFloat(aEl.value) || 0;
+  if (tEl) p.to = tEl.value === 'std' || tEl.value === 'od' ? tEl.value : 'both';
+  ppEditingId = null;
+  ppEditSnapshot = null;
+  redrawAllPPRows();
+  document.getElementById('pp' + id)?.classList.remove('pp-row--focus');
+  if (document.getElementById('results')?.classList.contains('show')) calculate();
+  else try { savePersistedState(); } catch (e) { /* */ }
+}
+
+// ── OD Periods ─────────────────────────────────────────────────────────────
 function odPeriodIsLast(op) {
   return ops.length > 0 && ops[ops.length - 1].id === op.id;
 }
@@ -760,6 +863,7 @@ function addOP(fromYear='', fromMonth='', toYear='', toMonth='', bal='', tillEnd
     tillEnd: !!tillEnd
   });
   if (!skipAutoEdit) {
+    if (ppEditingId) cancelPPRowEdit(ppEditingId);
     if (odEditingId && odEditingId !== id) cancelOPRowEdit(odEditingId);
     odEditingId = id;
     odEditSnapshot = cloneOpSnapshot(ops[ops.length - 1]);
@@ -816,6 +920,7 @@ function cloneOpSnapshot(p) {
 function beginOPRowEdit(id) {
   const p = ops.find(o => o.id === id);
   if (!p) return;
+  if (ppEditingId) cancelPPRowEdit(ppEditingId);
   if (odEditingId && odEditingId !== id) cancelOPRowEdit(odEditingId);
   if (odEditingId === id) return;
   odEditingId = id;
@@ -1056,9 +1161,13 @@ function loadPersistedState() {
     monthTableViewAll = !!s.monthTableViewAll;
     odEditingId = null;
     odEditSnapshot = null;
+    ppEditingId = null;
+    ppEditSnapshot = null;
     document.getElementById('pp-list').innerHTML = '';
     pps = [];
-    (Array.isArray(s.pps) ? s.pps : []).forEach(p => addPP(p.year, p.month, p.amount, p.to || 'both'));
+    (Array.isArray(s.pps) ? s.pps : []).forEach(p =>
+      addPP(p.year, p.month, p.amount, p.to || 'both', { skipAutoEdit: true })
+    );
     document.getElementById('op-list').innerHTML = '';
     ops = [];
     (Array.isArray(s.ops) ? s.ops : []).forEach(o =>
@@ -1087,6 +1196,8 @@ function resetAll() {
   fillStartYearSelect();
   document.getElementById('pp-list').innerHTML = '';
   pps = [];
+  ppEditingId = null;
+  ppEditSnapshot = null;
   document.getElementById('op-list').innerHTML = '';
   ops = [];
   odEditingId = null;
